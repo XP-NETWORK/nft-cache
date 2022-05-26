@@ -1,0 +1,9 @@
+node_modules
+
+dist
+.env
+.oldenv
+.mainenv
+.testnetenv
+verbibot.json
+events.cs
