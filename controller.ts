@@ -78,11 +78,14 @@ export const addNFT = async (req: any, res: any) => {
 
     let obj = dataToNFTObj(chainId, tokenId, owner, name, symbol, contract, contractType, metaData)
 
+    /**
+     * use Checker func and check for error -2 and -3 and -4
+     */
 
     let newMetaData = metaData//new meta data
     await upload(params, res)
         .then(async (imageUri) => {
-            if (!imageUri) {
+            if (!imageUri || imageUri == -1) {
                 res.send("no image uri received back")
                 return
             }
@@ -125,6 +128,7 @@ const upload = async (params: any, res: any) => {
         try {
             if (!params || !res) {
                 console.log("no params or res object were received in inner upload function ")
+                return -1
             }
             console.log("2. starting an upload to s3 bucket...")
             //upload to s3 photos bucket
@@ -146,6 +150,52 @@ const upload = async (params: any, res: any) => {
     })
 }
 
+//function to check if the uri is HTTPS or IPFS
+const checker = (uri: string) => {
+    if (!uri) {
+        console.log("no uri was sent or res was not received")
+        return -2
+    }
+
+    try {
+
+        let cond = (uri.indexOf("http://") == 0 || uri.indexOf("https://") == 0)
+        if (cond) {
+            return uri
+        }
+
+        //checking if the uri is with ipfs prefix
+        cond = (uri.indexOf("ipfs://") == 0)
+        if (cond) {
+            const newUri = formatURI(uri)
+            if (newUri == -4) {
+                return -4
+            } 
+            else {
+                return newUri
+            }
+        }
+
+    } catch (error) {
+        return -3
+    }
+
+}
+
+//function to format IPFS to standard HTTPS uri
+const formatURI = (uri: string) => {
+
+    if (!uri) {
+        return -4
+    }
+
+    let _uri = uri
+        _uri = uri.slice(7)
+        _uri = "https://ipfs.io/ipfs/" + _uri
+        return _uri
+
+}
+
 //FOR TESTING PURPOSES ONLY!!!!!!
 export const deleteObjects = (req: any, res: any) => {
 
@@ -154,15 +204,14 @@ export const deleteObjects = (req: any, res: any) => {
     }
     s3.listObjects(params, (err, data) => {
         if (data.Contents) {
-            for (let i = 0; i < data.Contents.length; i++)
-            {
-                console.log(`obj ${i} is: `+(data.Contents)[i].Key)
-                const params={
+            for (let i = 0; i < data.Contents.length; i++) {
+                console.log(`obj ${i} is: ` + (data.Contents)[i].Key)
+                const params = {
                     Bucket: bucket_name || "",
-                    Key:(data.Contents)[i].Key||""
+                    Key: (data.Contents)[i].Key || ""
                 }
-                s3.deleteObject(params,(err,data)=>{
-                    console.log(`data: ${i} `+data)
+                s3.deleteObject(params, (err, data) => {
+                    console.log(`data: ${i} ` + data)
                 })
             }
         }
