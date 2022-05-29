@@ -1,5 +1,4 @@
 import { Document, Model, Schema } from 'mongoose'
-import { ObjectId } from 'mongodb'
 
 export interface INFT {
     chainId:{type:String},
@@ -22,5 +21,6 @@ export interface INFTDocument extends INFT, Document {
 export interface INFTModel extends Model<INFTDocument> {
     getByURI(uri: string): Promise<INFTDocument>
     getByData(contract: string, chainId: string, tokenId: string): Promise<INFTDocument>
+    addToCache(obj:Object): Promise<INFTDocument>
     
 }

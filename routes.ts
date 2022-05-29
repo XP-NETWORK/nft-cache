@@ -1,12 +1,11 @@
 import express from 'express'
-import {test,getByData, addNFT, show, getByURI} from './controller'
+import {getByData, addNFT, getByURI, deleteObjects} from './controller'
 
 const router=express.Router()
 
-router.get("/test",show)
-router.get("/url",getByURI)
-router.get("/token",getByData)
+router.get("/uri",getByURI)
+router.get("/data",getByData)
 router.post("/add",addNFT)
-
+router.delete("/delete",deleteObjects)
 
 export default router

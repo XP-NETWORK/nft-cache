@@ -1,13 +1,26 @@
 import express from 'express'
-import * as mongoose from 'mongoose'
 import router from './routes'
-require('dotenv').config();
-//import middleware from './serverMiddleware'
-//import { MONGO_URI, PORT } from './config/keys'
-import NFT from './models/nft'
+import {config} from 'dotenv'
+import mongoose from "mongoose";
+import { mongoURL } from "./helpers/consts";
 
-require('./db')
+config()
 const port = process.env.PORT || 3030;
+const URL: string = mongoURL || ""
+
+const options: any = {
+    //useCreateIndex: true,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+};
+//TO DELETE ON PROD!!!!!!
+const testurl: string = "mongodb://localhost:27017/test"
+
+mongoose.connect(testurl, options);
+const connection = mongoose.connection;
+connection.on('error', err => console.error('connection error: ', err));
+connection.once('open', () => console.log('connected to: ', connection.name))
+
 
 const app = express()
 

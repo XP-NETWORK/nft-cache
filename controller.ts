@@ -1,44 +1,46 @@
-import NFT, { INFT } from './models/nft'
-import mongoose from 'mongoose'
+import NFT, { INFT, INFTDocument } from './models/nft'
 import { s3 } from "./s3/s3Client";
-import fs from 'fs'
-import axios from 'axios';
-import { NFTtype } from './types/types'
+import { bucket_name, ACL } from './helpers/consts'
+import { dataToNFTObj, dataToParams } from './helpers/helpers';
 
+//to test the connection
 export const test = (req: any, res: any) => {
     console.log("works")
     res.status(200).send("works!!!")
 }
 
+//get the metadata back by the url (retrieving ONLY the metadata)
 export const getByURI = async (req: any, res: any) => {
-    const url = req.query.url
+    const uri = req.query?.uri
 
-    if (!url) {
+    if (!uri) {
         res.status(401).send("no url given")
         return
     }
     try {
-        const result = await NFT.find({ uri: url })
+        const result: INFTDocument = await NFT.getByURI(uri)
         if (result) {
-            res.status(200).send(result)
+            res.status(200).send(result.metaData)
             return
         }
         else {
             res.status(200).send("no such NFT found")
+            return
         }
     } catch (error) {
-        res.status(400).send("problem in getNftViaUrl, error is: ", error)
+        res.status(400).send("problem in getByURI, error is: " + error)
+        return
     }
 }
 
-
+//getting the metadata by chain id, smart contract adderss and token id (retrieves ONLY the metadata)
+//ALL THREE ARE REQUIRED
 export const getByData = async (req: any, res: any) => {
     const { chainId, contract, tokenId } = req.query
     if (!chainId || !contract || !tokenId) {
         res.status(400).send("there was a problem with your request, you didn't send id/contract/token")
         return
     }
-    console.log(chainId, tokenId, contract)
     try {
         const result: INFT = await NFT.getByData(contract, chainId, tokenId)
 
@@ -55,47 +57,53 @@ export const getByData = async (req: any, res: any) => {
     }
 }
 
+
 export const addNFT = async (req: any, res: any) => {
     console.log("1. adding...")
-    //console.log(req.body)
-    const { chainId, tokenId, owner, smartContractAddress, name, symbol, contract, contractType, metaData } = req.body
-    //creating parameters for uploading to S3 bucket
-    const params = {
-        Bucket: "nft-cache-images",
-        Key: `${chainId}-${smartContractAddress}-${tokenId}`,
-        Body: metaData.image,
-        ACL: "public-read"
-    };
-
-
-
-    let obj = {
-        chainId: chainId,
-        tokenId: tokenId,
-        owner: owner,
-        name: name,
-        symbol: symbol,
-        contract: contract,
-        contractType: contractType,
-        metaData: {}
+    const { chainId, tokenId, owner, name, symbol, contract, contractType, metaData } = req.body
+    if (!chainId || !tokenId || !owner || !name || !symbol || !contract || !contractType || !metaData) {
+        console.log("chainId/tokenId/owner/name/symbol/contract/contractType/metadata is missing")
+        res.send("chainId/tokenId/owner/name/symbol/contract/contractType/metadata is missing")
+        return
     }
-    let newMD = metaData//new meta data
+    //creating parameters for uploading to S3 bucket
+    if (!bucket_name || !ACL || !(metaData.image)) {
+        console.log("bucket name or ACL or image uri is missing for params")
+        res.send("bucket name or ACL or image uri is missing for params")
+        return
+    }
+
+    const params = dataToParams(chainId, tokenId, contract, metaData.image)
+
+
+    let obj = dataToNFTObj(chainId, tokenId, owner, name, symbol, contract, contractType, metaData)
+
+
+    let newMetaData = metaData//new meta data
     await upload(params, res)
         .then(async (imageUri) => {
-            
-            console.log("5. imageUri: " + imageUri)
-            console.log("6. image retrieved successfully")
-            newMD.image = imageUri
-            obj.metaData = newMD
+            if (!imageUri) {
+                res.send("no image uri received back")
+                return
+            }
+            console.log("4. image retrieved successfully")
+            newMetaData.image = imageUri
+            obj.metaData = newMetaData
 
             //uploading to mongoDB
-
             try {
-                console.log("7. creating new NFT in mongoDB")
-                const result = await NFT.create(obj)
-                if (result) {
-                    console.log("8. NFT record created")
-                    res.status(200).send(result)
+                console.log("5. creating new NFT in mongoDB")
+                const result: any = await NFT.addToCache(obj)
+                //if the NFT already exists in the cache it will "result" will be the id of that NFT
+                //if it doesn't exist, "result" will be the newly created NFT 
+                if (result.exists == 1) {
+                    console.log(`such NFT already exists in cache with id: ${result.id}`);
+                    res.status(200).send(`such NFT already exists in cache with id: ${result.id}`)
+                    return
+                }
+                if (result.exists == 0) {
+                    console.log("6. NFT record created")
+                    res.status(200).send(result.nft)
                     return
                 }
             } catch (error) {
@@ -110,66 +118,54 @@ export const addNFT = async (req: any, res: any) => {
 
 }
 
-const upload = async (params: any, res: any) => new Promise((resolve:any, reject:any) => {
-    
-    try {
-        console.log("2. starting an upload to s3 bucket...")
-        //upload to s3 photos bucket
-        s3.upload(params, async (err: any, data: any) => {
-            if (err) {
-                console.log("error in s3.upload inside upload function inside addNFT function: " + err);
-                res.send("error in s3.upload inside upload function inside addNFT function: " + err)
-                return
+//inner function to upload an image to AWS s3 bucket and retrieve the image uri back
+const upload = async (params: any, res: any) => {
+    return new Promise((resolve: any, reject: any) => {
+
+        try {
+            if (!params || !res) {
+                console.log("no params or res object were received in inner upload function ")
             }
-            console.log("3. upload done successfully, retrieving image...")
-            //const paramsForImageRetrieval = { Bucket: "nft-cache-images", Key: data.key };
-            //console.log("data asd: " + JSON.stringify(data))
-    
-            //sending the image's uri back to us
-            /*await s3.getObject(paramsForImageRetrieval, function (err, data) {
-                if(err)
-                {
-                    console.log("error in s3.getObject in upload function in addNFT function is: "+err.message)
-                    res.send("error in s3.getObject in upload function in addNFT function is: "+err.message)
+            console.log("2. starting an upload to s3 bucket...")
+            //upload to s3 photos bucket
+            s3.upload(params, async (err: any, data: any) => {
+                if (err) {
+                    console.log("error in s3.upload inside upload function inside addNFT function: " + err);
+                    res.send("error in s3.upload inside upload function inside addNFT function: " + err)
                     return
                 }
-                console.log("we got here: ",data)
-                //res.writeHead(200, { 'Content-Type': 'image/jpeg' });
-                //res.write(data.Body, 'binary');
-                //res.end(null, 'binary');
-            });*/
-            console.log("4. loc: " + data.Location)
-            return data.Location
-    
-        })
-    
-    
-    } catch (error) {
-    
-        res.status(404).send("general error in upload func is: " + error)
-    }
-
-
-})
-
-
-
-export const show = (req: any, res: any) => {
-    try {
-        const testing = NFT.getByURI(req.query.uri)
-            .then((data) => {
-                res.status(200).send(data)
+                console.log("3. upload done successfully, retrieving image...")
+                resolve(data.Location)
             })
-    } catch (error) {
-        res.status(400).send("error in show is: ", error)
-    }
+        } catch (error) {
+
+            res.status(404).send("general error in upload func is: " + error)
+        }
+
+
+    })
 }
 
+//FOR TESTING PURPOSES ONLY!!!!!!
+export const deleteObjects = (req: any, res: any) => {
 
-
-
-
-
-
-
-
+    const params = {
+        Bucket: bucket_name || ""
+    }
+    s3.listObjects(params, (err, data) => {
+        if (data.Contents) {
+            for (let i = 0; i < data.Contents.length; i++)
+            {
+                console.log(`obj ${i} is: `+(data.Contents)[i].Key)
+                const params={
+                    Bucket: bucket_name || "",
+                    Key:(data.Contents)[i].Key||""
+                }
+                s3.deleteObject(params,(err,data)=>{
+                    console.log(`data: ${i} `+data)
+                })
+            }
+        }
+    })
+    res.send("done")
+}
