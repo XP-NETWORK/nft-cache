@@ -2,6 +2,10 @@ import NFT, { INFT, INFTDocument } from './models/nft'
 import { s3 } from "./s3/s3Client";
 import { bucket_name, ACL } from './helpers/consts'
 import { dataToNFTObj, dataToParams } from './helpers/helpers';
+import axios from 'axios';
+import multer from 'multer'
+import multerS3 from 'multer-s3'
+import fs from 'fs'
 
 //to test the connection
 export const test = (req: any, res: any) => {
@@ -67,20 +71,27 @@ export const addNFT = async (req: any, res: any) => {
         return
     }
     //creating parameters for uploading to S3 bucket
-    if (!bucket_name || !ACL || !(metaData.image)) {
-        console.log("bucket name or ACL or image uri is missing for params")
-        res.send("bucket name or ACL or image uri is missing for params")
+    if (!(metaData.image)) {
+        console.log("image uri is missing for params")
+        res.send("image uri is missing for params")
         return
     }
 
-    const params = dataToParams(chainId, tokenId, contract, metaData.image)
+    console.log("checking request type: https or ipfs");
 
+    const formattedImageURI: any = checker(metaData.image)
+
+    if (formattedImageURI < 0) {
+        console.log("error is: " + formattedImageURI.item)
+        res.send("error is: " + formattedImageURI.item)
+        return
+    }
+
+
+    const params = dataToParams(chainId, tokenId, contract, formattedImageURI)
 
     let obj = dataToNFTObj(chainId, tokenId, owner, name, symbol, contract, contractType, metaData)
 
-    /**
-     * use Checker func and check for error -2 and -3 and -4
-     */
 
     let newMetaData = metaData//new meta data
     await upload(params, res)
@@ -89,13 +100,13 @@ export const addNFT = async (req: any, res: any) => {
                 res.send("no image uri received back")
                 return
             }
-            console.log("4. image retrieved successfully")
+            console.log("5. image retrieved successfully")
             newMetaData.image = imageUri
             obj.metaData = newMetaData
 
             //uploading to mongoDB
             try {
-                console.log("5. creating new NFT in mongoDB")
+                console.log("6. creating new NFT in mongoDB")
                 const result: any = await NFT.addToCache(obj)
                 //if the NFT already exists in the cache it will "result" will be the id of that NFT
                 //if it doesn't exist, "result" will be the newly created NFT 
@@ -105,7 +116,7 @@ export const addNFT = async (req: any, res: any) => {
                     return
                 }
                 if (result.exists == 0) {
-                    console.log("6. NFT record created")
+                    console.log("7. NFT record created")
                     res.status(200).send(result.nft)
                     return
                 }
@@ -130,20 +141,35 @@ const upload = async (params: any, res: any) => {
                 console.log("no params or res object were received in inner upload function ")
                 return -1
             }
-            console.log("2. starting an upload to s3 bucket...")
+            console.log("3. starting an upload to s3 bucket...")
+            console.log(params.Body.item)
             //upload to s3 photos bucket
-            s3.upload(params, async (err: any, data: any) => {
-                if (err) {
-                    console.log("error in s3.upload inside upload function inside addNFT function: " + err);
-                    res.send("error in s3.upload inside upload function inside addNFT function: " + err)
+            axios.get(params.Body.item,{responseType:"arraybuffer"})
+                .then((data) => {
+                    let toUpload = params
+                    
+                    toUpload.Body = data.data
+                    s3.upload(toUpload, async (err: any, data: any) => {
+                        if (err) {
+                            console.log("error in s3.upload inside upload function inside addNFT function: " + err);
+                            res.send("error in s3.upload inside upload function inside addNFT function: " + err)
+                            return
+                        }
+                        console.log("4. upload done successfully")
+                        resolve(data.Location)
+
+                    })
+
+                })
+                .catch((error) => {
+                    console.log("error in axios in upload function is: " + error)
+                    res.send("error in axios in upload function is: " + error)
                     return
-                }
-                console.log("3. upload done successfully, retrieving image...")
-                resolve(data.Location)
-            })
+                })
+
         } catch (error) {
 
-            res.status(404).send("general error in upload func is: " + error)
+            res.status(400).send("general error in upload func is: " + error)
         }
 
 
@@ -154,14 +180,22 @@ const upload = async (params: any, res: any) => {
 const checker = (uri: string) => {
     if (!uri) {
         console.log("no uri was sent or res was not received")
-        return -2
+        const errorObj = {
+            num: -2,
+            item: "no uri was sent or res was not received"
+        }
+        return errorObj
     }
 
     try {
-
+        console.log("2.1 inside checker")
         let cond = (uri.indexOf("http://") == 0 || uri.indexOf("https://") == 0)
         if (cond) {
-            return uri
+            const obj = {
+                num: 0,
+                item: uri
+            }
+            return obj
         }
 
         //checking if the uri is with ipfs prefix
@@ -169,15 +203,28 @@ const checker = (uri: string) => {
         if (cond) {
             const newUri = formatURI(uri)
             if (newUri == -4) {
-                return -4
-            } 
+                const errorObj = {
+                    num: -4,
+                    item: "no uri was sent to formatURI function"
+                }
+                return errorObj
+
+            }
             else {
-                return newUri
+                const obj = {
+                    num: 0,
+                    item: newUri
+                }
+                return obj
             }
         }
 
     } catch (error) {
-        return -3
+        const errorObj = {
+            num: -3,
+            item: error
+        }
+        return errorObj
     }
 
 }
@@ -189,10 +236,11 @@ const formatURI = (uri: string) => {
         return -4
     }
 
+    console.log("2.1.1 formatting uri to https")
     let _uri = uri
-        _uri = uri.slice(7)
-        _uri = "https://ipfs.io/ipfs/" + _uri
-        return _uri
+    _uri = uri.slice(7)
+    _uri = "https://ipfs.io/ipfs/" + _uri
+    return _uri
 
 }
 

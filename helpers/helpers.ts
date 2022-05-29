@@ -5,7 +5,8 @@ export const dataToParams=(chainId:string,tokenId:string,contract:string,image:s
         Bucket: bucket_name,
         Key: `${chainId}-${contract}-${tokenId}`,
         Body: image,
-        ACL: ACL
+        ACL: ACL,
+        ContentType:"image/png"
     }
     return params
 }
