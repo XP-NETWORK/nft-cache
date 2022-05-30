@@ -87,12 +87,12 @@ export const addNFT = async (req: any, res: any) => {
         return
     }
 
-    if(!(metaData.format)){
+    if (!(metaData.format)) {
         console.log("no format was sent in metadata, please add the format and send again")
         res.send("no format was sent in metadata, please add the format and send again")
         return
     }
-    const params = dataToParams(chainId, tokenId, contract, formattedMediaURI,metaData.format)
+    const params = dataToParams(chainId, tokenId, contract, formattedMediaURI, metaData.format)
 
     let obj = dataToNFTObj(chainId, tokenId, owner, name, symbol, contract, contractType, metaData)
 
@@ -104,10 +104,12 @@ export const addNFT = async (req: any, res: any) => {
                 res.send("no image uri received back")
                 return
             }
+            
             console.log("5. image retrieved successfully")
             newMetaData.media = mediaUri
             obj.metaData = newMetaData
-
+            res.send(obj)
+            console.log("data sent to user, continuing with caching")
             //uploading to mongoDB
             try {
                 console.log("6. creating new NFT in mongoDB")
@@ -121,7 +123,7 @@ export const addNFT = async (req: any, res: any) => {
                 }
                 if (result.exists == 0) {
                     console.log("7. NFT record created")
-                    res.status(200).send(result.nft)
+                    //res.status(200).send(result.nft)
                     return
                 }
             } catch (error) {
@@ -148,13 +150,15 @@ const upload = async (params: any, res: any) => {
             console.log("3. starting an upload to s3 bucket...")
             console.log(params.Body.item)
             //upload to s3 photos bucket
-        axios.get(params.Body.item,{responseType:"arraybuffer" })
+            axios.get(params.Body.item, { responseType: "arraybuffer" })
                 .then((data) => {
                     let toUpload = params
-                    
-                    const file = fs.writeFile("./NFTemp",data.data,(err)=>{
-                        if(err)
-                        console.log("err is: "+err)
+
+                    const file = fs.writeFile("./NFTemp", data.data, (err) => {
+                        if (err) {
+                            console.log("error in creating the temp file in upload function : "+err)
+
+                        }
                     })
                     const stream = fs.createReadStream("NFTemp")
                     toUpload.Body = data.data//stream
@@ -169,7 +173,7 @@ const upload = async (params: any, res: any) => {
 
                     })
 
-                    
+
 
                 })
                 .catch((error) => {
