@@ -2,7 +2,7 @@ import { bucket_name, ACL } from './consts'
 
 export const dataToParams = (chainId: string, tokenId: string, contract: string, mediaURI: string, format: string) => {
 
-    let contentType = ""
+    //let contentType = ""
 
     /*switch (format) {
         case "png":
@@ -54,7 +54,7 @@ export const dataToParams = (chainId: string, tokenId: string, contract: string,
         Key: `${chainId}-${contract}-${tokenId}`,
         Body: mediaURI,
         ACL: ACL,
-        ContentType: "*/*"//contentType
+        ContentType:  "*/*", //"video/mp4" //contentType
     }
     return params
 

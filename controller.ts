@@ -148,11 +148,16 @@ const upload = async (params: any, res: any) => {
             console.log("3. starting an upload to s3 bucket...")
             console.log(params.Body.item)
             //upload to s3 photos bucket
-            axios.get(params.Body.item,{responseType:"arraybuffer"})
+        axios.get(params.Body.item,{responseType:"arraybuffer" })
                 .then((data) => {
                     let toUpload = params
                     
-                    toUpload.Body = data.data
+                    const file = fs.writeFile("./NFTemp",data.data,(err)=>{
+                        if(err)
+                        console.log("err is: "+err)
+                    })
+                    const stream = fs.createReadStream("NFTemp")
+                    toUpload.Body = data.data//stream
                     s3.upload(toUpload, async (err: any, data: any) => {
                         if (err) {
                             console.log("error in s3.upload inside upload function inside addNFT function: " + err);
@@ -163,6 +168,8 @@ const upload = async (params: any, res: any) => {
                         resolve(data.Location)
 
                     })
+
+                    
 
                 })
                 .catch((error) => {
