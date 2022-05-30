@@ -1,12 +1,12 @@
 import NFT, { INFT, INFTDocument } from './models/nft'
 import { s3 } from "./s3/s3Client";
-import { bucket_name, ACL } from './helpers/consts'
+import { bucket_name,bot,chat_id } from './helpers/consts'
 import { dataToNFTObj, dataToParams } from './helpers/helpers';
 import axios from 'axios';
-import multer from 'multer'
-import multerS3 from 'multer-s3'
 import fs from 'fs'
 
+const telegram_url=`https://api.telegram.org/bot${bot}/sendMessage?chat_id=${chat_id}&text=`
+let msg = ""
 //to test the connection
 export const test = (req: any, res: any) => {
     console.log("works")
@@ -64,6 +64,8 @@ export const getByData = async (req: any, res: any) => {
 
 export const addNFT = async (req: any, res: any) => {
     console.log("1. adding...")
+    msg = "new+NFT+is+being+added+to+cache"
+    axios.get(telegram_url+msg)
     const { chainId, tokenId, owner, name, symbol, contract, contractType, metaData } = req.body
     if (!chainId || !tokenId || !owner || !name || !symbol || !contract || !contractType || !metaData) {
         console.log("chainId/tokenId/owner/name/symbol/contract/contractType/metadata is missing")
@@ -94,7 +96,7 @@ export const addNFT = async (req: any, res: any) => {
     }
     const params = dataToParams(chainId, tokenId, contract, formattedMediaURI, metaData.format)
 
-    let obj = dataToNFTObj(chainId, tokenId, owner, name, symbol, contract, contractType, metaData)
+    let obj: any = dataToNFTObj(chainId, tokenId, owner, name, symbol, contract, contractType, metaData)
 
 
     let newMetaData = metaData//new meta data
@@ -104,7 +106,9 @@ export const addNFT = async (req: any, res: any) => {
                 res.send("no image uri received back")
                 return
             }
-            
+            msg = `new+S3+object+was+added:+old+URI+(received+from+request):+${metaData.media}.+new+URI+${mediaUri}`
+            axios.get(telegram_url+msg)
+
             console.log("5. image retrieved successfully")
             newMetaData.media = mediaUri
             obj.metaData = newMetaData
@@ -118,11 +122,20 @@ export const addNFT = async (req: any, res: any) => {
                 //if it doesn't exist, "result" will be the newly created NFT 
                 if (result.exists == 1) {
                     console.log(`such NFT already exists in cache with id: ${result.id}`);
+
+                    msg = `an+NFT+with+same+data+already+exists,+with+id:+${result.id}`
+                    axios.get(telegram_url+msg)
                     res.status(200).send(`such NFT already exists in cache with id: ${result.id}`)
                     return
                 }
                 if (result.exists == 0) {
                     console.log("7. NFT record created")
+
+                    msg = `new+NFT+added+to+cache:+chainId:+${obj.chainId},+tokenId:+${obj.tokenId},
+                    +contract+address:+${obj.contract},+metadata:+image+URI:+${obj.metaData.media},
+                    +format:+${obj.metaData.format}.`
+                    axios.get(telegram_url+msg)
+
                     //res.status(200).send(result.nft)
                     return
                 }
