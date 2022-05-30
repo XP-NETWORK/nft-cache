@@ -71,7 +71,7 @@ export const addNFT = async (req: any, res: any) => {
         return
     }
     //creating parameters for uploading to S3 bucket
-    if (!(metaData.image)) {
+    if (!(metaData.media)) {
         console.log("image uri is missing for params")
         res.send("image uri is missing for params")
         return
@@ -79,29 +79,33 @@ export const addNFT = async (req: any, res: any) => {
 
     console.log("checking request type: https or ipfs");
 
-    const formattedImageURI: any = checker(metaData.image)
+    const formattedMediaURI: any = checker(metaData.media)
 
-    if (formattedImageURI < 0) {
-        console.log("error is: " + formattedImageURI.item)
-        res.send("error is: " + formattedImageURI.item)
+    if (formattedMediaURI < 0) {
+        console.log("error is: " + formattedMediaURI.item)
+        res.send("error is: " + formattedMediaURI.item)
         return
     }
 
-
-    const params = dataToParams(chainId, tokenId, contract, formattedImageURI)
+    if(!(metaData.format)){
+        console.log("no format was sent in metadata, please add the format and send again")
+        res.send("no format was sent in metadata, please add the format and send again")
+        return
+    }
+    const params = dataToParams(chainId, tokenId, contract, formattedMediaURI,metaData.format)
 
     let obj = dataToNFTObj(chainId, tokenId, owner, name, symbol, contract, contractType, metaData)
 
 
     let newMetaData = metaData//new meta data
     await upload(params, res)
-        .then(async (imageUri) => {
-            if (!imageUri || imageUri == -1) {
+        .then(async (mediaUri) => {
+            if (!mediaUri || mediaUri == -1) {
                 res.send("no image uri received back")
                 return
             }
             console.log("5. image retrieved successfully")
-            newMetaData.image = imageUri
+            newMetaData.media = mediaUri
             obj.metaData = newMetaData
 
             //uploading to mongoDB
