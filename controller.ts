@@ -66,9 +66,9 @@ export const addNFT = async (req: any, res: any) => {
     sendInitMessage()
 
     const { chainId, tokenId, owner, name, symbol, contract, contractType, metaData } = req.body
-    if (!chainId || !tokenId || !owner || !name || !symbol || !contract || !contractType || !metaData) {
-        console.log("chainId/tokenId/owner/name/symbol/contract/contractType/metadata is missing")
-        res.send("chainId/tokenId/owner/name/symbol/contract/contractType/metadata is missing")
+    if (!chainId || !tokenId || !contract || !metaData) {
+        console.log("chainId/tokenId/contract/metadata is missing")
+        res.send("chainId/tokenId/contract/metadata is missing")
         return
     }
     //creating parameters for uploading to S3 bucket
@@ -94,8 +94,14 @@ export const addNFT = async (req: any, res: any) => {
         return
     }
     const params = dataToParams(chainId, tokenId, contract, formattedMediaURI, metaData.format)
-
-    let obj: any = dataToNFTObj(chainId, tokenId, owner, name, symbol, contract, contractType, metaData)
+    const misc = req.body.misc
+    let obj:any
+    if (misc === undefined) {
+        obj = dataToNFTObj(chainId, tokenId, contract, metaData, undefined)
+    }
+    else{
+        obj = dataToNFTObj(chainId, tokenId, contract, metaData, misc)
+    }
 
 
     let newMetaData = metaData//new meta data
@@ -176,13 +182,15 @@ const upload = async (params: any, res: any) => {
                     }
 
                     let toUpload = params
-                    const file = fs.writeFile("./NFTemp", data.data, (err) => {
+                    /*const file = fs.writeFile("./NFTemp", data.data, (err) => {
                         if (err) {
                             console.log("error in creating the temp file in upload function : " + err)
 
                         }
                     })
-                    const stream = fs.createReadStream("NFTemp")
+                    const stream = fs.createReadStream("NFTemp")*/
+
+                    console.log(data.data)
                     toUpload.Body = data.data//stream
                     s3.upload(toUpload, async (err: any, data: any) => {
                         if (err) {
@@ -199,8 +207,8 @@ const upload = async (params: any, res: any) => {
 
                 })
                 .catch((error) => {
-                    console.log("error in axios in upload function is: " + error)
-                    res.send("error in axios in upload function is: " + error)
+                    console.log("error in retrieveFileData in upload function is: " + error)
+                    res.send("error in retrieveFileData in upload function is: " + error)
                     return
                 })
 
@@ -221,7 +229,7 @@ const checker = (uri: string) => {
             num: -2,
             item: "no uri was sent or res was not received"
         }
-        
+
     }
 
     try {
@@ -243,7 +251,7 @@ const checker = (uri: string) => {
                     num: -4,
                     item: "no uri was sent to formatURI function"
                 }
-                
+
 
             }
             else {
@@ -251,7 +259,7 @@ const checker = (uri: string) => {
                     num: 0,
                     item: newUri
                 }
-                
+
             }
         }
 
@@ -290,12 +298,11 @@ const retrieveFileData = (mediaURI: string) => {
             }
         }
 
+        let _data: any
         await axios.get(mediaURI, { responseType: "arraybuffer" })
             .then((data) => {
-                resolve({
-                    num: 0,
-                    data: data
-                })
+                _data = data
+
             })
             .catch((err) => {
                 return {
@@ -303,6 +310,13 @@ const retrieveFileData = (mediaURI: string) => {
                     message: "problem with axios in retrieveFileData function inside axios promise is: " + err
                 }
             })
+        if (_data) {
+            resolve({
+                num: 0,
+                data: _data.data
+            })
+        }
+
     })
 }
 

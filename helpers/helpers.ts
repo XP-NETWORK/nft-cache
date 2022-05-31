@@ -61,16 +61,13 @@ export const dataToParams = (chainId: string, tokenId: string, contract: string,
 }
 
 
-export const dataToNFTObj = (chainId: string, tokenId: string, owner: string, name: string, symbol: string, contract: string, contractType: string, metaData: Object) => {
+export const dataToNFTObj = (chainId: string, tokenId: string, contract: string, metaData: Object,misc:any) => {
     const obj = {
         chainId: chainId,
         tokenId: tokenId,
-        owner: owner,
-        name: name,
-        symbol: symbol,
         contract: contract,
-        contractType: contractType,
-        metaData: metaData
+        metaData: metaData,
+        misc:misc
     }
     return obj
 }
