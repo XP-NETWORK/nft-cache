@@ -54,7 +54,7 @@ export const dataToParams = (chainId: string, tokenId: string, contract: string,
         Key: `${chainId}-${contract}-${tokenId}`,
         Body: mediaURI,
         ACL: ACL,
-        ContentType:  "*/*", //"video/mp4" //contentType
+        ContentType: "*/*", //"video/mp4" //contentType
     }
     return params
 
@@ -74,3 +74,4 @@ export const dataToNFTObj = (chainId: string, tokenId: string, owner: string, na
     }
     return obj
 }
+

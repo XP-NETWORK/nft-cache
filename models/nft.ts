@@ -28,7 +28,7 @@ schema.statics.getByURI = async function(
 
 schema.statics.getByData = async function(contract: string, chainId: string, tokenId: string)
 {
-    return  await this.findOne({contract: contract, chainId: chainId, tokenId: tokenId})
+    return await this.findOne({contract: contract, chainId: chainId, tokenId: tokenId})
     //return await query.exec().then((r: INFTDocument) => r ? r : undefined)
 }
 
@@ -36,18 +36,18 @@ schema.statics.addToCache = async function (obj:any){
     let NFT = await this.findOne({contract:obj.contract,tokenId:obj.tokenId})
     if(NFT)
     {
-        const NFTexists={
+        return {
             exists:1,
             id:NFT._id,
         }
-        return NFTexists
+        
     }
     NFT = await this.create(obj)
-    const NFTDoesntExist={
+    return {
         exists:0,
         nft:NFT,
     }
-    return NFTDoesntExist
+    
 }
 
 const NFT: INFTModel = model<INFTDocument, INFTModel>('nfts', schema)

@@ -1,12 +1,11 @@
 import NFT, { INFT, INFTDocument } from './models/nft'
 import { s3 } from "./s3/s3Client";
-import { bucket_name,bot,chat_id } from './helpers/consts'
+import { bucket_name, bot, chat_id } from './helpers/consts'
 import { dataToNFTObj, dataToParams } from './helpers/helpers';
 import axios from 'axios';
 import fs from 'fs'
+import { sendInitMessage, sendNewNFTCachedMessage, sendNFTexistsMessage, sendUploadedMessage } from './helpers/telegram';
 
-const telegram_url=`https://api.telegram.org/bot${bot}/sendMessage?chat_id=${chat_id}&text=`
-let msg = ""
 //to test the connection
 export const test = (req: any, res: any) => {
     console.log("works")
@@ -64,8 +63,8 @@ export const getByData = async (req: any, res: any) => {
 
 export const addNFT = async (req: any, res: any) => {
     console.log("1. adding...")
-    msg = "new+NFT+is+being+added+to+cache"
-    axios.get(telegram_url+msg)
+    sendInitMessage()
+
     const { chainId, tokenId, owner, name, symbol, contract, contractType, metaData } = req.body
     if (!chainId || !tokenId || !owner || !name || !symbol || !contract || !contractType || !metaData) {
         console.log("chainId/tokenId/owner/name/symbol/contract/contractType/metadata is missing")
@@ -101,42 +100,35 @@ export const addNFT = async (req: any, res: any) => {
 
     let newMetaData = metaData//new meta data
     await upload(params, res)
-        .then(async (mediaUri) => {
-            if (!mediaUri || mediaUri == -1) {
+        .then(async (mediaUri: any) => {
+            if (!mediaUri || mediaUri === -1) {
                 res.send("no image uri received back")
                 return
             }
-            msg = `new+S3+object+was+added:+old+URI+(received+from+request):+${metaData.media}.+new+URI+${mediaUri}`
-            axios.get(telegram_url+msg)
 
-            console.log("5. image retrieved successfully")
-            newMetaData.media = mediaUri
-            obj.metaData = newMetaData
-            res.send(obj)
-            console.log("data sent to user, continuing with caching")
-            //uploading to mongoDB
             try {
+                sendUploadedMessage(metaData.media, mediaUri)
+                console.log("5. image retrieved successfully")
+                newMetaData.media = mediaUri
+                obj.metaData = newMetaData
+                res.send(obj)
+                console.log("data sent to user, continuing with caching")
+                //uploading to mongoDB
                 console.log("6. creating new NFT in mongoDB")
                 const result: any = await NFT.addToCache(obj)
                 //if the NFT already exists in the cache it will "result" will be the id of that NFT
                 //if it doesn't exist, "result" will be the newly created NFT 
-                if (result.exists == 1) {
+                if (result.exists === 1) {
                     console.log(`such NFT already exists in cache with id: ${result.id}`);
 
-                    msg = `an+NFT+with+same+data+already+exists,+with+id:+${result.id}`
-                    axios.get(telegram_url+msg)
+                    sendNFTexistsMessage(result.id)
                     res.status(200).send(`such NFT already exists in cache with id: ${result.id}`)
                     return
                 }
-                if (result.exists == 0) {
+                if (result.exists === 0) {
                     console.log("7. NFT record created")
 
-                    msg = `new+NFT+added+to+cache:+chainId:+${obj.chainId},+tokenId:+${obj.tokenId},
-                    +contract+address:+${obj.contract},+metadata:+image+URI:+${obj.metaData.media},
-                    +format:+${obj.metaData.format}.`
-                    axios.get(telegram_url+msg)
-
-                    //res.status(200).send(result.nft)
+                    sendNewNFTCachedMessage(chainId, tokenId, contract, obj.metaData.media, obj.metaData.format)
                     return
                 }
             } catch (error) {
@@ -151,6 +143,10 @@ export const addNFT = async (req: any, res: any) => {
 
 }
 
+
+
+//#region Helper functions for addNFT function
+
 //inner function to upload an image to AWS s3 bucket and retrieve the image uri back
 const upload = async (params: any, res: any) => {
     return new Promise((resolve: any, reject: any) => {
@@ -163,13 +159,26 @@ const upload = async (params: any, res: any) => {
             console.log("3. starting an upload to s3 bucket...")
             console.log(params.Body.item)
             //upload to s3 photos bucket
-            axios.get(params.Body.item, { responseType: "arraybuffer" })
-                .then((data) => {
-                    let toUpload = params
+            //axios.get(params.Body.item, { responseType: "arraybuffer" })
+            retrieveFileData(params.Body.item)
+                .then((data: any) => {
 
+                    if (!data) {
+                        console.log("no data was received from axios in upload function")
+                        res.send("no data was received from axios in upload function")
+                        return
+                    }
+                    const maybeError: any = checkData(data, res)//checks what the data is- if error or a valid file
+                    if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
+                        console.log(maybeError.message)
+                        res.send(maybeError.message)
+                        return
+                    }
+
+                    let toUpload = params
                     const file = fs.writeFile("./NFTemp", data.data, (err) => {
                         if (err) {
-                            console.log("error in creating the temp file in upload function : "+err)
+                            console.log("error in creating the temp file in upload function : " + err)
 
                         }
                     })
@@ -208,51 +217,49 @@ const upload = async (params: any, res: any) => {
 const checker = (uri: string) => {
     if (!uri) {
         console.log("no uri was sent or res was not received")
-        const errorObj = {
+        return {
             num: -2,
             item: "no uri was sent or res was not received"
         }
-        return errorObj
+        
     }
 
     try {
         console.log("2.1 inside checker")
-        let cond = (uri.indexOf("http://") == 0 || uri.indexOf("https://") == 0)
+        let cond = (uri.indexOf("http://") === 0 || uri.indexOf("https://") === 0)
         if (cond) {
-            const obj = {
+            return {
                 num: 0,
                 item: uri
             }
-            return obj
         }
 
         //checking if the uri is with ipfs prefix
-        cond = (uri.indexOf("ipfs://") == 0)
+        cond = (uri.indexOf("ipfs://") === 0)
         if (cond) {
             const newUri = formatURI(uri)
-            if (newUri == -4) {
-                const errorObj = {
+            if (newUri === -4) {
+                return {
                     num: -4,
                     item: "no uri was sent to formatURI function"
                 }
-                return errorObj
+                
 
             }
             else {
-                const obj = {
+                return {
                     num: 0,
                     item: newUri
                 }
-                return obj
+                
             }
         }
 
     } catch (error) {
-        const errorObj = {
+        return {
             num: -3,
             item: error
         }
-        return errorObj
     }
 
 }
@@ -271,6 +278,61 @@ const formatURI = (uri: string) => {
     return _uri
 
 }
+
+//function to retrieve file data from media uri
+const retrieveFileData = (mediaURI: string) => {
+    return new Promise(async (resolve: any, reject: any) => {
+        if (!mediaURI) {
+            console.log("no mediaURI received in retrieveFileData")
+            return {
+                num: -5,
+                message: "no mediaURI received in retrieveFileData"
+            }
+        }
+
+        await axios.get(mediaURI, { responseType: "arraybuffer" })
+            .then((data) => {
+                resolve({
+                    num: 0,
+                    data: data
+                })
+            })
+            .catch((err) => {
+                return {
+                    num: -6,
+                    message: "problem with axios in retrieveFileData function inside axios promise is: " + err
+                }
+            })
+    })
+}
+
+//function to check data received from retrieveFileData function
+const checkData = (data: any, res: any) => {
+    if (!data || !res) {
+        return {
+            num: -7,
+            message: "either data or res were not received in checkData function"
+        }
+    }
+
+    switch (data.num) {
+        case -5:
+            {
+                return -5
+            }
+        case -6:
+            {
+                return -6
+            }
+    }
+
+    return 0
+
+}
+
+//#endregion
+
+
 
 //FOR TESTING PURPOSES ONLY!!!!!!
 export const deleteObjects = (req: any, res: any) => {
