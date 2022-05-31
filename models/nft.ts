@@ -32,6 +32,7 @@ schema.statics.getByData = async function (contract: string, chainId: string, to
     //return await query.exec().then((r: INFTDocument) => r ? r : undefined)
 }
 
+
 schema.statics.addToCache = async function (obj: any, res: any) {
     let NFT = await this.findOne({ contract: obj.contract, tokenId: obj.tokenId })
     if (NFT) {
@@ -39,6 +40,7 @@ schema.statics.addToCache = async function (obj: any, res: any) {
         res.send(`such NFT already exists in cache with id: ${NFT._id}`)
         return
     }
+
     res.send(obj)
     NFT = await this.create(obj)
 

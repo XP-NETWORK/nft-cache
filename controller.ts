@@ -105,13 +105,20 @@ export const addNFT = async (req: any, res: any) => {
 
 
     let newMetaData = metaData//new meta data
-    await upload(params, res)
+    let errorObj:any=0
+    errorObj = await upload(params, res)
         .then(async (mediaUri: any) => {
-            if (!mediaUri || mediaUri === -1) {
+            if (!mediaUri) {
                 res.send("no image uri received back")
                 return
             }
-
+            if (errorObj.num < 0) {
+                console.log("a")
+                res.send(errorObj.data)
+                return
+            }
+            
+            console.log("b: ",errorObj)
             try {
                 sendUploadedMessage(metaData.media, mediaUri)
                 console.log("5. image retrieved successfully")
@@ -119,7 +126,7 @@ export const addNFT = async (req: any, res: any) => {
                 obj.metaData = newMetaData
 
                 const body = obj;
-                
+
                 //res.send(obj)
                 console.log("data sent to user, continuing with caching")
 
@@ -127,21 +134,6 @@ export const addNFT = async (req: any, res: any) => {
                 console.log("6. creating new NFT in mongoDB")
                 const result: any = await NFT.addToCache(obj, res)
 
-                //if the NFT already exists in the cache it will "result" will be the id of that NFT
-                //if it doesn't exist, "result" will be the newly created NFT 
-
-                /*if (result.exists === 1) {
-                    console.log(`such NFT already exists in cache with id: ${result.id}`);
-                    sendNFTexistsMessage(result.id)
-                    //res.status(200).send(`such NFT already exists in cache with id: ${result.id}`)
-                    return
-                }
-                if (result.exists === 0) {
-                    console.log("7. NFT record created")
-
-                    sendNewNFTCachedMessage(chainId, tokenId, contract, obj.metaData.media, obj.metaData.format)
-                    return
-                }*/
             } catch (error) {
                 res.status(400).send("couldn't add nft to the cache: " + error)
                 return
@@ -165,34 +157,38 @@ const upload = async (params: any, res: any) => {
         try {
             if (!params || !res) {
                 console.log("no params or res object were received in inner upload function ")
-                return -1
+                return {
+                    num: -1,
+                    data: "no params or res object were received in inner upload function "
+                }
             }
             console.log("3. starting an upload to s3 bucket...")
-            console.log("enough: ",params)
-            const searchParams={
-                Bucket:params.Bucket||""
+
+            const searchParams = {
+                Bucket: params.Bucket || ""
             }
             s3.listObjects(searchParams, (err, data) => {
-                if(err)
-                {
-                    console.log("err in s3.listObjects in upload is: "+err)
+                if (err) {
+                    console.log("err in s3.listObjects in upload is: " + err)
                 }
                 if (data.Contents) {
                     for (let i = 0; i < data.Contents.length; i++) {
-                        if((data.Contents)[i].Key==params.Key)
-                        {
-                            console.log(`object with key ${params.Key} already exists in bucket`)
-                            res.send(`object with key ${params.Key} already exists in bucket`)
-                            return
+                        if ((data.Contents)[i].Key == params.Key) {
+                            const message = `object with key ${params.Key} already exists in bucket`
+                            console.log(message)
+                            return {
+                                num: -8,
+                                data: message
+                            }
                         }
-                        
+
                     }
                 }
             })
 
             //upload to s3 photos bucket
 
-            //axios.get(params.Body.item, { responseType: "arraybuffer" })
+
             retrieveFileData(params.Body.item)
                 .then((data: any) => {
 
@@ -220,7 +216,6 @@ const upload = async (params: any, res: any) => {
                         }
                         console.log("4. upload done successfully")
                         resolve(data.Location)
-
                     })
 
 
