@@ -23,7 +23,7 @@ schema.index({ uri: 1 }, { unique: true })
 schema.statics.getByURI = async function (
     uri: string
 ) {
-    return await this.findOne({ "metaData.image": uri })
+    return await this.findOne({ "metaData.media": uri })
     //return await query.exec().then((r: INFTDocument) => r ? r : undefined)
 }
 
