@@ -363,25 +363,3 @@ const checkData = (data: any, res: any) => {
 
 
 
-//FOR TESTING PURPOSES ONLY!!!!!!
-export const deleteObjects = (req: any, res: any) => {
-
-    const params = {
-        Bucket: bucket_name || ""
-    }
-    s3.listObjects(params, (err, data) => {
-        if (data.Contents) {
-            for (let i = 0; i < data.Contents.length; i++) {
-                console.log(`obj ${i} is: ` + (data.Contents)[i].Key)
-                const params = {
-                    Bucket: bucket_name || "",
-                    Key: (data.Contents)[i].Key || ""
-                }
-                s3.deleteObject(params, (err, data) => {
-                    console.log(`data: ${i} ` + data)
-                })
-            }
-        }
-    })
-    res.send("done")
-}
