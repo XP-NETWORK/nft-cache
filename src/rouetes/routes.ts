@@ -1,7 +1,7 @@
 import express from 'express'
-import {getByData, addNFT, getByURI, deleteObjects} from './controller'
+import {getByData, addNFT, getByURI, deleteObjects} from '../controllers/controller'
 
-const router=express.Router()
+const router = express.Router()
 
 router.get("/uri",getByURI)
 router.get("/data",getByData)

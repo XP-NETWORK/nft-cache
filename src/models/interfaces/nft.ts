@@ -9,7 +9,7 @@ export interface INFT {
     contractType: { type: String },
     collectionIdent: { type: String },
     metaData: { type: Schema.Types.Mixed },
-    misc?:{type: Schema.Types.Mixed}
+    misc?: { type: Schema.Types.Mixed }
 }
 
 // Instance methods
@@ -22,6 +22,5 @@ export interface INFTDocument extends INFT, Document {
 export interface INFTModel extends Model<INFTDocument> {
     getByURI(uri: string): Promise<INFTDocument>
     getByData(contract: string, chainId: string, tokenId: string): Promise<INFTDocument>
-    addToCache(obj:Object,res:any,mediasAdded:number): Promise<INFTDocument>
-    
+    addToCache(obj: any, res: any, mediasAdded: number): Promise<INFTDocument>
 }

@@ -2,7 +2,7 @@ import express from 'express'
 import {config} from 'dotenv'
 import mongoose from "mongoose";
 
-import router from './routes'
+import router from './rouetes/routes'
 import { mongoURL } from "./helpers/consts";
 
 config()
@@ -22,10 +22,6 @@ const app = express()
 app.use(express.json())
 app.use("/nft", router)
 
-mongoose.connect(testurl, options);
-const connection = mongoose.connection;
-connection.on('error', err => console.error('connection error: ', err));
-connection.once('open', () => console.log('connected to: ', connection.name))
 
 app.use('/', express.static('./public'));
 app.use((req, res, next) => {
@@ -42,3 +38,9 @@ app.use((req, res, next) => {
 export default app.listen(port, () => {
     console.log(`Server runs on port ${port}`)
 })
+
+
+mongoose.connect(testurl, options);
+const connection = mongoose.connection;
+connection.on('error', err => console.error('connection error: ', err));
+connection.once('open', () => console.log('connected to: ', connection.name))

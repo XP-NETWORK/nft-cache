@@ -1,6 +1,7 @@
 import { model, Schema } from 'mongoose'
-import { CustomDocumentBuild } from '../utils/mongodb/documentDefaults'
-import { INFTDocument, INFTModel, INFT } from '../interfaces/nft'
+// import { CustomDocumentBuild } from '../../utils/mongodb/documentDefaults'
+import { CustomDocumentBuild } from '../mongodb/documentDefaults';
+import { INFTDocument, INFTModel, INFT } from './interfaces/nft'
 import { sendNewNFTCachedMessage, sendNFTexistsMessage } from '../helpers/telegram'
 
 export const docNFT = {
@@ -16,7 +17,7 @@ export const docNFT = {
 }
 
 export const schema = CustomDocumentBuild(docNFT)
-schema.index({ uri: 1 }, { unique: true })
+schema.index({ uri: 1 })
 /**
  * MODEL NFT, used for interactions with MongoDB
  */
@@ -24,8 +25,9 @@ schema.index({ uri: 1 }, { unique: true })
 schema.statics.getByURI = async function (
     uri: string
 ) {
-    return await this.findOne({ "metaData.image": uri })
-    //return await query.exec().then((r: INFTDocument) => r ? r : undefined)
+    // return await this.findOne({ "metaData.image": uri })
+    // return await query.exec().then((r: INFTDocument) => r ? r : undefined)
+    return await this.findOne({ "metaData.image": uri }).exec();
 }
 
 schema.statics.getByData = async function (contract: string, chainId: string, tokenId: string) {
@@ -35,18 +37,21 @@ schema.statics.getByData = async function (contract: string, chainId: string, to
 
 
 schema.statics.addToCache = async function (obj: any, res: any, mediasAdded: number) {
-    let NFT = await this.findOne({ contract: obj.contract, tokenId: obj.tokenId })
-    if (NFT) {
+    let NFT = await this.findOne({ contract: obj.contract, tokenId: obj.tokenId })    
+    if (NFT !== null) {
         sendNFTexistsMessage(NFT._id)
         res.send(`such NFT already exists in cache with id: ${NFT._id}`)
         return
-    }
-
-    
+    } else {        
         res.send(obj)
-        NFT = await this.create(obj)
-
-        console.log("7. NFT record created")
+        new Promise((reslove, rejects) => {
+            try {
+                reslove(this.create(obj));
+            } catch {
+                rejects("error")
+            }
+        })
+    }
 
 
     //FIX THAT MESSAGE VVVVV
@@ -61,5 +66,5 @@ const NFT: INFTModel = model<INFTDocument, INFTModel>('nfts', schema)
 export default NFT
 export {
     INFT,
-    INFTDocument,
+    INFTModel,
 }
