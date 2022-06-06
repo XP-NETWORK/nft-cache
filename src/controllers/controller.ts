@@ -579,7 +579,7 @@ const checkData = (data: any, res: any) => {
 
 
 //FOR TESTING PURPOSES ONLY!!!!!!
-export const deleteObjects = (req: any, res: any) => {
+/*export const deleteObjects = (req: any, res: any) => {
 
     const params = {
         Bucket: bucket_name || ""
@@ -599,7 +599,7 @@ export const deleteObjects = (req: any, res: any) => {
         }
     })
     res.send("done")
-}
+}*/
 
 
 
