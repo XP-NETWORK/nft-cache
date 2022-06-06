@@ -1,14 +1,15 @@
 import { Document, Model, Schema } from 'mongoose'
 
 export interface INFT {
-    chainId:{type:String},
-    tokenId:{type:String},
-    owner:{type:String},
-    name:{type:String},
-    symbol:{type:String},
-    contract:{type:String},
-    contractType:{type:String},
-    metaData:{type:Schema.Types.Mixed}
+    chainId: { type: String },
+    tokenId: { type: String },
+    owner?: { type: String },
+    uri: { type: String },
+    contract: { type: String },
+    contractType: { type: String },
+    collectionIdent: { type: String },
+    metaData: { type: Schema.Types.Mixed },
+    misc?:{type: Schema.Types.Mixed}
 }
 
 // Instance methods
@@ -21,6 +22,6 @@ export interface INFTDocument extends INFT, Document {
 export interface INFTModel extends Model<INFTDocument> {
     getByURI(uri: string): Promise<INFTDocument>
     getByData(contract: string, chainId: string, tokenId: string): Promise<INFTDocument>
-    addToCache(obj:Object,res:any): Promise<INFTDocument>
+    addToCache(obj:Object,res:any,mediasAdded:number): Promise<INFTDocument>
     
 }

@@ -7,11 +7,12 @@ export const docNFT = {
     chainId: { type: String },
     tokenId: { type: String },
     owner: { type: String },
-    name: { type: String },
-    symbol: { type: String },
+    uri: { type: String },
     contract: { type: String },
     contractType: { type: String },
-    metaData: { type: Schema.Types.Mixed }
+    collectionIdent: { type: String },
+    metaData: { type: Schema.Types.Mixed },
+    misc: { type: Schema.Types.Mixed }
 }
 
 export const schema = CustomDocumentBuild(docNFT)
@@ -23,7 +24,7 @@ schema.index({ uri: 1 }, { unique: true })
 schema.statics.getByURI = async function (
     uri: string
 ) {
-    return await this.findOne({ "metaData.media": uri })
+    return await this.findOne({ "metaData.image": uri })
     //return await query.exec().then((r: INFTDocument) => r ? r : undefined)
 }
 
@@ -33,7 +34,7 @@ schema.statics.getByData = async function (contract: string, chainId: string, to
 }
 
 
-schema.statics.addToCache = async function (obj: any, res: any) {
+schema.statics.addToCache = async function (obj: any, res: any, mediasAdded: number) {
     let NFT = await this.findOne({ contract: obj.contract, tokenId: obj.tokenId })
     if (NFT) {
         sendNFTexistsMessage(NFT._id)
@@ -41,12 +42,16 @@ schema.statics.addToCache = async function (obj: any, res: any) {
         return
     }
 
-    res.send(obj)
-    NFT = await this.create(obj)
-
-    console.log("7. NFT record created")
     
-    sendNewNFTCachedMessage(obj.chainId, obj.tokenId, obj.contract, obj.metaData.media, obj.metaData.format)
+        res.send(obj)
+        NFT = await this.create(obj)
+
+        console.log("7. NFT record created")
+
+
+    //FIX THAT MESSAGE VVVVV
+
+    //sendNewNFTCachedMessage(obj.chainId, obj.tokenId, obj.contract, obj.metaData.media, obj.metaData.format)
     return
 
 

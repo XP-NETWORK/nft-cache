@@ -65,36 +65,82 @@ export const addNFT = async (req: any, res: any) => {
     console.log("1. adding...")
     sendInitMessage()
 
-    const { chainId, tokenId, owner, name, symbol, contract, contractType, metaData } = req.body
+    const { chainId, tokenId, owner, uri, contract, contractType, metaData, misc } = req.body
     if (!chainId || !tokenId || !contract || !metaData) {
         console.log("chainId/tokenId/contract/metadata is missing")
         res.send("chainId/tokenId/contract/metadata is missing")
         return
     }
     //creating parameters for uploading to S3 bucket
-    if (!(metaData.media)) {
-        console.log("image uri is missing for params")
-        res.send("image uri is missing for params")
+    if (!(metaData.image || metaData.animation_url)) {
+        console.log("image/video uri is missing for params")
+        res.send("image/video uri is missing for params")
         return
     }
 
-    console.log("checking request type: https or ipfs");
-
-    const formattedMediaURI: any = checker(metaData.media)
-
-    if (formattedMediaURI < 0) {
-        console.log("error is: " + formattedMediaURI.item)
-        res.send("error is: " + formattedMediaURI.item)
-        return
-    }
-
-    if (!(metaData.format)) {
+    if (!((metaData.imageFormat) || (metaData.animation_url_format))) {
         console.log("no format was sent in metadata, please add the format and send again")
         res.send("no format was sent in metadata, please add the format and send again")
         return
     }
-    const params = dataToParams(chainId, tokenId, contract, formattedMediaURI, metaData.format)
-    const misc = req.body.misc
+
+    console.log("checking request type: https or ipfs");
+    let formattedImageURI: any
+    if (metaData.image) {
+        formattedImageURI = checker(metaData.image)
+        if (formattedImageURI.num < 0) {
+            console.log("error is: " + formattedImageURI.item)
+            res.send("error is: " + formattedImageURI.item)
+            return
+        }
+    }
+    let formattedVideoURI: any
+    if (metaData.animation_url) {
+        formattedVideoURI = checker(metaData.animation_url)
+        if (formattedVideoURI.num < 0) {
+            console.log("error is: " + formattedVideoURI.item)
+            res.send("error is: " + formattedVideoURI.item)
+            return
+        }
+    }
+
+
+    let imageNvideo: any
+    if (formattedImageURI && !formattedVideoURI) {
+        imageNvideo = {
+            item: formattedImageURI.item,
+            //image: formattedImageURI.item,
+            //imageFormat: metaData.imageFormat
+            twoItems: 0
+        }
+    }
+
+    else if (formattedVideoURI && !formattedImageURI) {
+        imageNvideo = //formattedVideoURI.item 
+        {
+            item: formattedVideoURI.item,
+            //image: formattedImageURI.item,
+            //imageFormat: metaData.imageFormat
+            twoItems: 0
+            //video: formattedVideoURI.item,
+            //video_format: metaData.animation_url_format
+        }
+    }
+
+    else if (formattedImageURI && formattedVideoURI) {
+        imageNvideo = {
+            image: formattedImageURI.item,
+            //imageFormat: metaData.imageFormat,
+            video: formattedVideoURI.item,
+            //video_format: metaData.animation_url_format
+            twoItems: 1
+        }
+    }
+
+
+
+    const params = dataToParams(chainId, tokenId, contract, imageNvideo)
+    //const misc = req.body.misc
     let obj: any
     if (misc === undefined) {
         obj = dataToNFTObj(chainId, tokenId, contract, metaData, undefined)
@@ -105,8 +151,8 @@ export const addNFT = async (req: any, res: any) => {
 
 
     let newMetaData = metaData//new meta data
-    let errorObj:any=0
-    errorObj = await upload(params, res)
+    let errorObj: any = 0
+    errorObj = await upload(params, metaData, res)
         .then(async (mediaUri: any) => {
             if (!mediaUri) {
                 res.send("no image uri received back")
@@ -117,23 +163,67 @@ export const addNFT = async (req: any, res: any) => {
                 res.send(errorObj.data)
                 return
             }
-            
-            console.log("b: ",errorObj)
+
+            console.log("b: ", errorObj)
             try {
-                sendUploadedMessage(metaData.media, mediaUri)
+
+                //NEED TO FIX THAT MESSAGE VVVV
+
+                //sendUploadedMessage(metaData.image, mediaUri)
                 console.log("5. image retrieved successfully")
-                newMetaData.media = mediaUri
-                obj.metaData = newMetaData
 
-                const body = obj;
+                //in case we have either image or video
 
-                //res.send(obj)
-                console.log("data sent to user, continuing with caching")
+                if (metaData.image && !metaData.animation_url) {
+                    
+                    newMetaData.image = mediaUri.location1
+                    obj.metaData = newMetaData
+                    const body = obj;
 
-                //uploading to mongoDB
-                console.log("6. creating new NFT in mongoDB")
-                const result: any = await NFT.addToCache(obj, res)
+                    //res.send(obj)
+                    console.log("data sent to user, continuing with caching")
 
+                    //uploading to mongoDB
+                    console.log("6. creating new NFT in mongoDB")
+                    const result: any = await NFT.addToCache(obj, res,1)
+                    return
+                }
+
+
+                if (!metaData.image && metaData.animation_url) {
+                    
+                    newMetaData.video = mediaUri.location1
+                    obj.metaData = newMetaData
+
+                    const body = obj;
+
+                    //res.send(obj)
+                    console.log("data sent to user, continuing with caching")
+
+                    //uploading to mongoDB
+                    console.log("6. creating new NFT in mongoDB")
+                    const result: any = await NFT.addToCache(obj, res,1)
+                    return
+                }
+
+
+                //in case we have image AND video
+                if(metaData.image && metaData.animation_url)
+                {
+                    newMetaData.image = mediaUri.location1
+                    newMetaData.video = mediaUri.location2
+                    obj.metaData = newMetaData
+
+                    const body = obj;
+
+                    //res.send(obj)
+                    console.log("data sent to user, continuing with caching")
+
+                    //uploading to mongoDB
+                    console.log("6. creating new NFT in mongoDB")
+                    const result: any = await NFT.addToCache(obj, res,2)
+                    return
+                }
             } catch (error) {
                 res.status(400).send("couldn't add nft to the cache: " + error)
                 return
@@ -151,9 +241,9 @@ export const addNFT = async (req: any, res: any) => {
 //#region Helper functions for addNFT function
 
 //inner function to upload an image to AWS s3 bucket and retrieve the image uri back
-const upload = async (params: any, res: any) => {
-    return new Promise((resolve: any, reject: any) => {
-
+const upload = async (params: any, metaData: any, res: any) => {
+    return new Promise(async (resolve: any, reject: any) => {
+        let location: any;
         try {
             if (!params || !res) {
                 console.log("no params or res object were received in inner upload function ")
@@ -165,67 +255,185 @@ const upload = async (params: any, res: any) => {
             console.log("3. starting an upload to s3 bucket...")
 
             const searchParams = {
-                Bucket: params.Bucket || ""
+                Bucket: bucket_name || ""
             }
-            s3.listObjects(searchParams, (err, data) => {
-                if (err) {
-                    console.log("err in s3.listObjects in upload is: " + err)
-                }
-                if (data.Contents) {
-                    for (let i = 0; i < data.Contents.length; i++) {
-                        if ((data.Contents)[i].Key == params.Key) {
-                            const message = `object with key ${params.Key} already exists in bucket`
-                            console.log(message)
-                            return {
-                                num: -8,
-                                data: message
+
+            if (params.items === 1) {
+
+                let toUpload: any = params
+
+                //checking inside the bucket to see if we don't have duplicates
+                s3.listObjects(searchParams, (err, data) => {
+                    if (err) {
+                        console.log("err in s3.listObjects in upload is: " + err)
+                    }
+                    if (data.Contents) {
+                        for (let i = 0; i < data.Contents.length; i++) {
+                            if ((data.Contents)[i].Key == params.params.Key) {
+                                const message = `object with key ${params.params.Key} already exists in bucket`
+                                console.log(message)
+                                return {
+                                    num: -8,
+                                    data: message
+                                }
                             }
+
                         }
-
                     }
-                }
-            })
+                })
 
-            //upload to s3 photos bucket
+                //actually retreiving file data (image OR video)
+                console.log("mmooooooooo 1")
+                await retrieveFileData(params.params.Body)
+                    .then((data: any) => {
 
-
-            retrieveFileData(params.Body.item)
-                .then((data: any) => {
-
-                    if (!data) {
-                        console.log("no data was received from axios in upload function")
-                        res.send("no data was received from axios in upload function")
-                        return
-                    }
-
-                    //checks what the data is- if error or a valid file
-                    const maybeError: any = checkData(data, res)
-                    if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
-                        console.log(maybeError.message)
-                        res.send(maybeError.message)
-                        return
-                    }
-
-                    let toUpload = params
-                    toUpload.Body = data.data
-                    s3.upload(toUpload, async (err: any, data: any) => {
-                        if (err) {
-                            console.log("error in s3.upload inside upload function inside addNFT function: " + err);
-                            res.send("error in s3.upload inside upload function inside addNFT function: " + err)
+                        if (!data) {
+                            console.log("no data was received from axios in upload function")
+                            res.send("no data was received from axios in upload function")
                             return
                         }
-                        console.log("4. upload done successfully")
-                        resolve(data.Location)
+
+                        //checks what the data is- if error or a valid file
+                        const maybeError: any = checkData(data, res)
+                        if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
+                            console.log(maybeError.message)
+                            res.send(maybeError.message)
+                            return
+                        }
+
+
+                        toUpload.Body = data.data
+                        s3.upload(toUpload, async (err: any, data: any) => {
+                            if (err) {
+                                console.log("error in s3.upload inside upload function inside addNFT function: " + err);
+                                res.send("error in s3.upload inside upload function inside addNFT function: " + err)
+                                return
+                            }
+                            console.log("4. upload done successfully")
+                            location.location1 = data.Location
+                            resolve(location)
+                        })
+
+
+                    })
+                    .catch((error) => {
+                        console.log("error in retrieveFileData for image in upload function is: " + error)
+                        res.send("error in retrieveFileData for image in upload function is: " + error)
+                        return
+                    })
+
+
+            }
+
+            if (params.items === 2) {
+
+                let toUpload: any = params
+
+                s3.listObjects(searchParams, (err, data) => {
+                    if (err) {
+                        console.log("err in s3.listObjects in upload is: " + err)
+                    }
+                    if (data.Contents) {
+                        for (let i = 0; i < data.Contents.length; i++) {
+                            if (((data.Contents)[i].Key == params.imageParams.Key) || ((data.Contents)[i].Key == params.videoParams.Key)) {
+                                const message = `object with key ${params.params.Key} already exists in bucket`
+                                console.log(message)
+                                return {
+                                    num: -8,
+                                    data: message
+                                }
+                            }
+
+                        }
+                    }
+                })
+
+                console.log("mmooooooooo 2")
+
+                //retrieving data for image
+                await retrieveFileData(params.imageParams.Body)
+                    .then((data: any) => {
+
+                        if (!data) {
+                            console.log("no data was received from axios in upload function")
+                            res.send("no data was received from axios in upload function")
+                            return
+                        }
+
+                        //checks what the data is- if error or a valid file
+                        const maybeError: any = checkData(data, res)
+                        if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
+                            console.log(maybeError.message)
+                            res.send(maybeError.message)
+                            return
+                        }
+
+
+                        toUpload.Body = data.data
+                        s3.upload(toUpload, async (err: any, data: any) => {
+                            if (err) {
+                                console.log("error in s3.upload inside upload function inside addNFT function: " + err);
+                                res.send("error in s3.upload inside upload function inside addNFT function: " + err)
+                                return
+                            }
+                            console.log("4. upload done successfully")
+                            location.location1 = data.Location
+                        })
+
+
+
+                    })
+                    .catch((error) => {
+                        console.log("error in retrieveFileData for image in upload function is: " + error)
+                        res.send("error in retrieveFileData for image in upload function is: " + error)
+                        return
                     })
 
 
 
-                })
-                .catch((error) => {
-                    console.log("error in retrieveFileData in upload function is: " + error)
-                    res.send("error in retrieveFileData in upload function is: " + error)
-                    return
-                })
+
+                //retrieving data for video
+                await retrieveFileData(params.videoParams.Body)
+                    .then((data: any) => {
+
+                        if (!data) {
+                            console.log("no data was received from axios in upload function")
+                            res.send("no data was received from axios in upload function")
+                            return
+                        }
+
+                        //checks what the data is- if error or a valid file
+                        const maybeError: any = checkData(data, res)
+                        if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
+                            console.log(maybeError.message)
+                            res.send(maybeError.message)
+                            return
+                        }
+
+
+                        toUpload.Body = data.data
+                        s3.upload(toUpload, async (err: any, data: any) => {
+                            if (err) {
+                                console.log("error in s3.upload inside upload function inside addNFT function: " + err);
+                                res.send("error in s3.upload inside upload function inside addNFT function: " + err)
+                                return
+                            }
+                            console.log("4. upload done successfully")
+                            location.location2 = data.Location
+                        })
+
+                        resolve(location)
+
+                    })
+                    .catch((error) => {
+                        console.log("error in retrieveFileData for image in upload function is: " + error)
+                        res.send("error in retrieveFileData for image in upload function is: " + error)
+                        return
+                    })
+
+            }
+
+
 
         } catch (error) {
 
@@ -303,7 +511,7 @@ const formatURI = (uri: string) => {
 }
 
 //function to retrieve file data from media uri
-const retrieveFileData = (mediaURI: string) => {
+const retrieveFileData = (mediaURI: any) => {
     return new Promise(async (resolve: any, reject: any) => {
         if (!mediaURI) {
             console.log("no mediaURI received in retrieveFileData")
@@ -314,6 +522,8 @@ const retrieveFileData = (mediaURI: string) => {
         }
 
         let _data: any
+        console.log("mediaURI: " + mediaURI)
+
         await axios.get(mediaURI, { responseType: "arraybuffer" })
             .then((data) => {
                 _data = data
@@ -363,3 +573,25 @@ const checkData = (data: any, res: any) => {
 
 
 
+//FOR TESTING PURPOSES ONLY!!!!!!
+export const deleteObjects = (req: any, res: any) => {
+
+    const params = {
+        Bucket: bucket_name || ""
+    }
+    s3.listObjects(params, (err, data) => {
+        if (data.Contents) {
+            for (let i = 0; i < data.Contents.length; i++) {
+                console.log(`obj ${i} is: ` + (data.Contents)[i].Key)
+                const params = {
+                    Bucket: bucket_name || "",
+                    Key: (data.Contents)[i].Key || ""
+                }
+                s3.deleteObject(params, (err, data) => {
+                    console.log(`data: ${i} ` + data)
+                })
+            }
+        }
+    })
+    res.send("done")
+}

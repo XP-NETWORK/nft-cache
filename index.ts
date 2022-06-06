@@ -14,14 +14,15 @@ const options: any = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 };
-
+//TO DELETE ON PROD!!!!!!
+const testurl: string = "mongodb://localhost:27017/test"
 
 const app = express()
 
 app.use(express.json())
 app.use("/nft", router)
 
-mongoose.connect(URL, options);
+mongoose.connect(testurl, options);
 const connection = mongoose.connection;
 connection.on('error', err => console.error('connection error: ', err));
 connection.once('open', () => console.log('connected to: ', connection.name))
