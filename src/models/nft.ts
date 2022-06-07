@@ -27,7 +27,7 @@ schema.statics.getByURI = async function (
 ) {
     // return await this.findOne({ "metaData.image": uri })
     // return await query.exec().then((r: INFTDocument) => r ? r : undefined)
-    return await this.findOne({ "metaData.image": uri }).exec();
+    return await this.findOne({ uri: uri }).exec();
 }
 
 schema.statics.getByData = async function (contract: string, chainId: string, tokenId: string) {
