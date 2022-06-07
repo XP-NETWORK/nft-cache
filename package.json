@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build":"tsc -p tsconfig.json",
+    "build":"tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "yarn build && node dist/index.js",
+    "start": "node ./dist/index.js",
     "dev": "nodemon ./src/index.ts"
   },
   "keywords": [],
