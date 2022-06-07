@@ -1,0 +1,6 @@
+"chainId":"1234",
+    "tokenId":"4567",
+    "owner":"you",
+    "collectionIdent":"someCollection",
+    "uri":"https://uriimage.com",
+    "contract":"0xsomeaddress"

@@ -1,7 +1,7 @@
 import express from 'express'
 import {config} from 'dotenv'
 import mongoose from "mongoose";
-
+import cors from 'cors'
 import router from './rouetes/routes'
 import { mongoURL } from "./helpers/consts";
 
@@ -21,7 +21,7 @@ const app = express()
 
 app.use(express.json())
 app.use("/nft", router)
-
+app.use(cors())
 
 app.use('/', express.static('./public'));
 app.use((req, res, next) => {
