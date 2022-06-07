@@ -20,8 +20,9 @@ const options: any = {
 const app = express()
 
 app.use(express.json())
-app.use("/nft", router)
 app.use(cors())
+
+//app.options('*', cors())
 
 app.use('/', express.static('./public'));
 app.use((req, res, next) => {
@@ -34,6 +35,7 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use("/nft", router)
 
 export default app.listen(port, () => {
     console.log(`Server runs on port ${port}`)
