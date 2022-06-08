@@ -536,7 +536,7 @@ const retrieveFileData = async (mediaURI: any) => {
 
         //console.log("mediaUri is: "+mediaURI);
         try {
-            const _data = await axios.get(mediaURI, { responseType: "arraybuffer" })
+            const _data = await axios.get(mediaURI, {timeout:10000, responseType: "arraybuffer" })
                 .then((data) => data.data ? data.data : undefined)
                 .catch((err) => {
                     return {
@@ -594,9 +594,7 @@ export const fileAdder = async (req: any, res: any) => {
     try {
 
         const location = await fileUpload(uri, res)
-        const obj = dataToNFTObjFile( uri,{uri: location})
-        console.log("alex: ",uri);
-        
+        const obj = dataToNFTObjFile( uri,{uri: location})        
         if (obj) {
             await NFT.addToCacheFile(obj, res)
             return
