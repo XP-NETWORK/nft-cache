@@ -6,7 +6,6 @@ import axios from 'axios';
 import fs from 'fs'
 import { sendInitMessage, sendNewNFTCachedMessage, sendNFTexistsMessage, sendUploadedMessage } from '../helpers/telegram';
 //import { rejects } from 'assert';
-import { got } from 'got'
 
 //to test the connection
 export const test = (req: any, res: any) => {
