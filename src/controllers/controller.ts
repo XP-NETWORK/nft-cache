@@ -484,7 +484,15 @@ const retrieveFileData = async (mediaURI: any) => {
         }
 
         try {
-            const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
+            const onDownload = (progressEvent:any) => {
+                const total = parseFloat(progressEvent.currentTarget.responseHeaders['Content-Length'])
+                const current = progressEvent.currentTarget.response.length
+            
+                let percentCompleted = Math.floor(current / total * 100)
+                console.log('completed: ', percentCompleted)
+              }
+              
+            const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" ,onDownloadProgress:onDownload})
                 .then((data) => data.data ? data.data : undefined)
                 .catch((err) => {
                     return {
