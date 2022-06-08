@@ -520,23 +520,15 @@ const retrieveFileDataFile = async (mediaURI: any, res: any) => {
 
         try {
 
-            const _data = await got.stream.get(mediaURI)//if that doesn't work uncomment the next line
-
-            //const _data: any = await got.get(mediaURI,{resolveBodyOnly:true,responseType:"buffer"} )
-            
-            _data.on('uploadProgress', (progress: any) => {
-                console.log(progress);
-            });
-
-            /*const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
+            const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
                 .then((data) => data.data ? data.data : undefined)
                 .catch((err) => {
-                    res.status(200).send("timedOut")//should maybe delete this, may cause problems
+                    //res.status(200).send("timedOut")//should maybe delete this, may cause problems
                     return {
                         num: -6,
                         message: "problem with axios in retrieveFileData function inside axios promise is: " + err
                     }
-                })*/
+                })
             if (_data) {
                 resolve({
                     num: 0,
