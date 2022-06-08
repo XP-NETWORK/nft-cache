@@ -517,7 +517,7 @@ const formatURI = (uri: string) => {
         _uri = "https://ipfs.io/ipfs/" + _uri
         return _uri
     }
-    else{
+    else {
         return uri
     }
 
@@ -535,23 +535,24 @@ const retrieveFileData = async (mediaURI: any) => {
         }
 
         //console.log("mediaUri is: "+mediaURI);
-
-
-        const _data = await axios.get(mediaURI, { responseType: "arraybuffer" })
-            .then((data) => data.data ? data.data : undefined)
-            .catch((err) => {
-                return {
-                    num: -6,
-                    message: "problem with axios in retrieveFileData function inside axios promise is: " + err
-                }
-            })
-        if (_data) {
-            resolve({
-                num: 0,
-                data: _data
-            })
+        try {
+            const _data = await axios.get(mediaURI, { responseType: "arraybuffer" })
+                .then((data) => data.data ? data.data : undefined)
+                .catch((err) => {
+                    return {
+                        num: -6,
+                        message: "problem with axios in retrieveFileData function inside axios promise is: " + err
+                    }
+                })
+            if (_data) {
+                resolve({
+                    num: 0,
+                    data: _data
+                })
+            }
+        } catch (error) {
+            console.log("error: "+error)
         }
-
     })
 }
 
@@ -593,9 +594,7 @@ export const fileAdder = async (req: any, res: any) => {
     try {
         console.log(uri);
 
-        const _uri: any = formatURI(uri)
-
-        const location = await fileUpload(_uri, res)
+        const location = await fileUpload(uri, res)
 
         console.log("this is the location: ", location)
 
@@ -684,7 +683,7 @@ const fileUpload = async (uri: string, res: any) => {
                             }).promise().then(n => n.Location);
                             resolve(uploaded)
                         } catch (e) {
-
+                            console.log("error in s3.upload when uploading in uploadFile function" + e)
                         }
                     })
                     .catch((error) => {
