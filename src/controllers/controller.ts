@@ -484,17 +484,10 @@ const retrieveFileData = async (mediaURI: any) => {
         }
 
         try {
-            const onDownload = (progressEvent:any) => {
-                const total = parseFloat(progressEvent.currentTarget.responseHeaders['Content-Length'])
-                const current = progressEvent.currentTarget.response.length
-            
-                let percentCompleted = Math.floor(current / total * 100)
-                console.log('completed: ', percentCompleted)
-              }
-              
-            const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" ,onDownloadProgress:onDownload})
+            const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
                 .then((data) => data.data ? data.data : undefined)
                 .catch((err) => {
+                    
                     return {
                         num: -6,
                         message: "problem with axios in retrieveFileData function inside axios promise is: " + err
@@ -512,6 +505,42 @@ const retrieveFileData = async (mediaURI: any) => {
         }
     })
 }
+
+
+const retrieveFileDataFile = async (mediaURI: any,res:any) => {
+    return await new Promise(async (resolve: any, reject: any) => {
+        if (!mediaURI) {
+
+            return {
+                num: -5,
+                message: "no mediaURI received in retrieveFileData"
+            }
+        }
+
+        try {
+            const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
+                .then((data) => data.data ? data.data : undefined)
+                .catch((err) => {
+                    res.status(200).send("timedOut")
+                    return {
+                        num: -6,
+                        message: "problem with axios in retrieveFileData function inside axios promise is: " + err
+                    }
+                })
+            if (_data) {
+                resolve({
+                    num: 0,
+                    data: _data
+                })
+            }
+        } catch (error) {
+            //console.log("error: "+error)
+            reject(error)
+        }
+    })
+}
+
+
 
 //function to check data received from retrieveFileData function
 const checkData = (data: any, res: any) => {
@@ -617,7 +646,7 @@ const fileUpload = async (uri: string, res: any) => {
 
                 //let typeBody = params.Body ? params.Body : params.params.Body            
 
-                await retrieveFileData(uri)
+                await retrieveFileDataFile(uri,res)
                     .then(async (data: any) => {
                         if (!data) {
 
