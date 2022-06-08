@@ -5,7 +5,8 @@ import { dataToNFTObj, dataToParams, paramsForFile, dataToNFTObjFile } from '../
 import axios from 'axios';
 import fs from 'fs'
 import { sendInitMessage, sendNewNFTCachedMessage, sendNFTexistsMessage, sendUploadedMessage } from '../helpers/telegram';
-import { rejects } from 'assert';
+//import { rejects } from 'assert';
+import { got } from 'got'
 
 //to test the connection
 export const test = (req: any, res: any) => {
@@ -487,7 +488,7 @@ const retrieveFileData = async (mediaURI: any) => {
             const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
                 .then((data) => data.data ? data.data : undefined)
                 .catch((err) => {
-                    
+
                     return {
                         num: -6,
                         message: "problem with axios in retrieveFileData function inside axios promise is: " + err
@@ -507,7 +508,7 @@ const retrieveFileData = async (mediaURI: any) => {
 }
 
 
-const retrieveFileDataFile = async (mediaURI: any,res:any) => {
+const retrieveFileDataFile = async (mediaURI: any, res: any) => {
     return await new Promise(async (resolve: any, reject: any) => {
         if (!mediaURI) {
 
@@ -518,15 +519,24 @@ const retrieveFileDataFile = async (mediaURI: any,res:any) => {
         }
 
         try {
-            const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
+
+            const _data = await got.stream.get(mediaURI)//if that doesn't work uncomment the next line
+
+            //const _data: any = await got.get(mediaURI,{resolveBodyOnly:true,responseType:"buffer"} )
+            
+            _data.on('uploadProgress', (progress: any) => {
+                console.log(progress);
+            });
+
+            /*const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
                 .then((data) => data.data ? data.data : undefined)
                 .catch((err) => {
-                    res.status(200).send("timedOut")
+                    res.status(200).send("timedOut")//should maybe delete this, may cause problems
                     return {
                         num: -6,
                         message: "problem with axios in retrieveFileData function inside axios promise is: " + err
                     }
-                })
+                })*/
             if (_data) {
                 resolve({
                     num: 0,
@@ -590,7 +600,7 @@ export const fileAdder = async (req: any, res: any) => {
             return
         }
     } catch (e) {
-        res.send("error is: "+e)
+        res.send("error is: " + e)
     }
 
 
@@ -646,7 +656,7 @@ const fileUpload = async (uri: string, res: any) => {
 
                 //let typeBody = params.Body ? params.Body : params.params.Body            
 
-                await retrieveFileDataFile(uri,res)
+                await retrieveFileDataFile(uri, res)
                     .then(async (data: any) => {
                         if (!data) {
 
