@@ -1,5 +1,5 @@
 import express from 'express'
-import {getByData, addNFT, getByURI,fileAdder,deleteObjects} from '../controllers/controller'
+import {getByData, addNFT, getByURI,fileAdder} from '../controllers/controller'
 
 const router = express.Router()
 
