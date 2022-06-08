@@ -23,4 +23,5 @@ export interface INFTModel extends Model<INFTDocument> {
     getByURI(uri: string): Promise<INFTDocument>
     getByData(contract: string, chainId: string, tokenId: string): Promise<INFTDocument>
     addToCache(obj: any, res: any, mediasAdded: number): Promise<INFTDocument>
+    addToCacheFile(obj: any, res: any): Promise<INFTDocument>
 }

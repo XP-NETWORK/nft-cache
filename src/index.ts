@@ -15,14 +15,26 @@ const options: any = {
     useUnifiedTopology: true,
 };
 //TO DELETE ON PROD!!!!!!
-
+//const testurl: string = "mongodb://localhost:27017/test"
 
 const app = express()
 
 app.use(express.json())
 app.use(cors())
 
-//app.options('*', cors())
+
+/*const corsOptions = {
+    origin: (origin:any, callback:any) => {
+      callback(null, true);
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Access-Control-Allow-Origin", "Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
+    credentials: true
+  };*/
+
+
+//app.options('*', cors(corsOptions))
+//app.use(cors(corsOptions))
 
 app.use('/', express.static('./public'));
 app.use((req, res, next) => {

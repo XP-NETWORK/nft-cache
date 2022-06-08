@@ -1,4 +1,5 @@
 import { bucket_name, ACL } from './consts'
+import { uuid } from 'uuidv4';
 
 export const dataToParams = (chainId: string, tokenId: string, contract: string, imageNvideo: any) => {
 
@@ -12,7 +13,7 @@ export const dataToParams = (chainId: string, tokenId: string, contract: string,
                 ACL: ACL,
                 ContentType: "*/*",
             },
-            items:1
+            items: 1
         }
         return params
     }
@@ -35,14 +36,14 @@ export const dataToParams = (chainId: string, tokenId: string, contract: string,
                 ContentType: "*/*",
 
             },
-            items:2
+            items: 2
         }
         return params
     }
 }
 
 
-export const dataToNFTObj = (chainId: string, tokenId: string, contract: string, metaData: Object, misc: any) => {
+export const dataToNFTObj = (chainId: any, tokenId: any, contract: any, metaData: any, misc: any) => {
     const obj = {
         chainId: chainId,
         tokenId: tokenId,
@@ -53,3 +54,24 @@ export const dataToNFTObj = (chainId: string, tokenId: string, contract: string,
     return obj
 }
 
+export const dataToNFTObjFile = (uri: any, metaData: any) => {
+    const obj = {
+        uri:uri,
+        metaData: metaData
+    }
+    return obj
+}
+
+
+export const paramsForFile = (uri: string) => {
+
+    const params = {
+        Bucket: bucket_name,
+        Key: uri,
+        Body: uri,
+        ACL: ACL,
+        ContentType: "*/*",
+    }
+
+    return params
+}

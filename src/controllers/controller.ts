@@ -1,7 +1,7 @@
 import NFT, { INFT } from '../models/nft'
 import { s3 } from "../s3/s3Client";
 import { bucket_name, bot, chat_id } from '../helpers/consts'
-import { dataToNFTObj, dataToParams } from '../helpers/helpers';
+import { dataToNFTObj, dataToParams, paramsForFile } from '../helpers/helpers';
 import axios from 'axios';
 import fs from 'fs'
 import { sendInitMessage, sendNewNFTCachedMessage, sendNFTexistsMessage, sendUploadedMessage } from '../helpers/telegram';
@@ -504,17 +504,17 @@ const checker = (uri: string) => {
 }
 
 //function to format IPFS to standard HTTPS uri
-const formatURI = (uri: string) => {
+const formatURI = (link: string) => {
 
-    if (!uri) {
+    if (!link) {
         return -4
     }
 
-    console.log("2.1.1 formatting uri to https")
-    let _uri = uri
-    _uri = uri.slice(7)
-    _uri = "https://ipfs.io/ipfs/" + _uri
-    return _uri
+    if (link.substring(0, 4) === "ipfs") {
+        const newLink = link.replace("ipfs:/", "https://xpnetwork.infura-ipfs.io");
+        return newLink;
+      }
+      return link;
 
 }
 
@@ -578,6 +578,127 @@ const checkData = (data: any, res: any) => {
 
 
 
+export const fileAdder= async(req:any,res:any)=>{
+
+    const uri = req.body.uri
+    if(!uri)
+    {
+        res.send("no uri received")
+        return
+    }
+
+    const _uri:any = formatURI(uri)
+
+    const location =  await fileUpload(_uri, res)
+
+    console.log("this is the location: ",location)
+
+    const obj = dataToNFTObj(0,0,0,{uri:location},{})
+
+    if(obj)
+    {
+        await NFT.addToCacheFile(obj,res)
+        return
+    }
+    else{
+        res.send("no object returned from dataToNFTObj function")
+        return
+    }
+    
+
+}
+
+
+const fileUpload= async(uri:string,res:any)=>{
+    {
+        return await new Promise(async (resolve: any, reject: any) => {
+            
+            try {
+                if (!uri || !res) {
+                    return {
+                        num: -1,
+                    }
+                }
+    
+                const searchParams = {
+                    Bucket: bucket_name || ""
+                }
+    
+                let params:any = paramsForFile(uri)
+    
+                console.log(params)
+
+                //checking inside the bucket to see if we don't have duplicates
+                s3.listObjects(searchParams, (err, data) => {
+                    if (err) {
+                        console.log("err in s3.listObjects in upload is: " + err)
+                    }
+                    if (data.Contents) {
+                        for (let i = 0; i < data.Contents.length; i++) {
+                            if ((data.Contents)[i].Key === params.Key) {
+                                const message = `object with key ${params.Key} already exists in bucket`
+                                console.log(message)
+                                return {
+                                    num: -8,
+                                    data: message
+                                }
+                            }
+    
+                        }
+                    }
+                })
+    
+                //actually retreiving file data (image OR video)
+    
+                
+                //let typeBody = params.Body ? params.Body : params.params.Body            
+    
+                await retrieveFileData(uri)
+                    .then(async (data: any) => {
+                        if (!data) {
+                            console.log("no data was received from axios in upload function")
+                            res.send("no data was received from axios in upload function")
+                            return
+                        }
+                        
+                        console.log("data.data: ",data.data)
+                        
+                        params.Body = data.data
+                        
+
+                        let uploaded = await s3.upload(params, async (err: any, data: any) => {
+                            if (err) {
+                                console.log("error in s3.upload inside upload function inside addNFT function: " + err);
+                                res.send("error in s3.upload inside upload function inside addNFT function: " + err)
+                                return
+                            }
+                            console.log("4. upload done successfully")
+    
+                        }).promise().then(n => n.Location);
+                        resolve(uploaded)
+    
+                    })
+                    .catch((error) => {
+                        console.log("error in retrieveFileData for image in upload function is: " + error)
+                        res.send("error in retrieveFileData for image in upload function is: " + error)
+                        return
+                    })
+    
+    
+    
+    
+    
+            } catch (error) {
+    
+                res.status(400).send("general error in upload func is: " + error)
+            }
+    
+    
+        })
+    }
+}
+
+
 //FOR TESTING PURPOSES ONLY!!!!!!
 /*export const deleteObjects = (req: any, res: any) => {
 
@@ -606,123 +727,3 @@ const checkData = (data: any, res: any) => {
 
 
 
-/**
- * if (params.items === 2) {
-
-                let toUpload: any = params.imageParams
-                
-                s3.listObjects(searchParams, (err, data) => {
-                    if (err) {
-                        console.log("err in s3.listObjects in upload is: " + err)
-                    }
-                    if (data.Contents) {
-                        for (let i = 0; i < data.Contents.length; i++) {
-                            if (((data.Contents)[i].Key == params.imageParams.Key) || ((data.Contents)[i].Key == params.videoParams.Key)) {
-                                const message = `object with key ${params.params.Key} already exists in bucket`
-                                console.log(message)
-                                return {
-                                    num: -8,
-                                    data: message
-                                }
-                            }
-
-                        }
-                    }
-                })
-
-                //retrieving data for image
-
-                console.log("getting file data- image")
-                                
-                await retrieveFileData(params.imageParams.Body)
-                    .then((data: any) => {
-
-                        if (!data) {
-                            console.log("no data was received from axios in upload function")
-                            res.send("no data was received from axios in upload function")
-                            return
-                        }
-
-                        //checks what the data is- if error or a valid file
-                        const maybeError: any = checkData(data, res)
-                        if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
-                            console.log(maybeError.message)
-                            res.send(maybeError.message)
-                            return
-                        }
-
-                        toUpload.Body = data.data
-                        
-                        
-                        s3.upload(toUpload, async (err: any, data: any) => {
-                            if (err) {
-                                console.log("error in s3.upload inside upload function inside addNFT function: " + err);
-                                res.send("error in s3.upload inside upload function inside addNFT function: " + err)
-                                return
-                            }
-                            console.log("4. upload done successfully")
-                            location.location1 = data.Location
-                        })
-
-
-
-                    })
-                    .catch((error) => {
-                        console.log("error in retrieveFileData for image in upload function is: " + error)
-                        res.send("error in retrieveFileData for image in upload function is: " + error)
-                        return
-                    })
-
-
-
-                    toUpload = params.videoParams
-
-
-                //retrieving data for video
-
-                console.log("getting file data- video")
-                
-                await retrieveFileData(params.videoParams.Body)
-                    .then(async (data: any) => {
-                        if (!data) {
-                            console.log("no data was received from axios in upload function")
-                            res.send("no data was received from axios in upload function")
-                            return
-                        }
-
-                        //checks what the data is- if error or a valid file
-                        const maybeError: any = checkData(data, res)
-                        if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
-                            console.log(maybeError.message)
-                            res.send(maybeError.message)
-                            return
-                        }
-
-                        toUpload.Body = data.data
-                        let videoLoc:string = "";
-                     s3.upload(toUpload, async (err: any, data: any) => {
-                            if (err) {
-                                console.log("error in s3.upload inside upload function inside addNFT function: " + err);
-                                res.send("error in s3.upload inside upload function inside addNFT function: " + err)
-                                return
-                            }
-                            console.log("4. upload done successfully")
-
-                            console.log("stuff are: ",data)
-                            
-                            location.location2 = data.Location
-                        })
-                        
-
-                        
-                        resolve(location)
-
-                    })
-                    .catch((error) => {
-                        console.log("error in retrieveFileData for image in upload function is: " + error)
-                        res.send("error in retrieveFileData for image in upload function is: " + error)
-                        return
-                    })
-
-            }*/
- 

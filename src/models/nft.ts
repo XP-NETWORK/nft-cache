@@ -62,6 +62,25 @@ schema.statics.addToCache = async function (obj: any, res: any, mediasAdded: num
 
 }
 
+
+schema.statics.addToCacheFile = async function(obj:any,res:any){
+    let NFT = await this.findOne({ uri: obj.uri })    
+    if (NFT !== null) {
+        sendNFTexistsMessage(NFT._id)
+        res.send(obj.metaData)
+        return
+    } else {        
+        res.send(obj.metaData)
+        new Promise((reslove, rejects) => {
+            try {
+                reslove(this.create(obj.metaData));
+            } catch {
+                rejects("error")
+            }
+        })
+    }
+}
+
 const NFT: INFTModel = model<INFTDocument, INFTModel>('nfts', schema)
 export default NFT
 export {
