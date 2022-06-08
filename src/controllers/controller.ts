@@ -485,7 +485,7 @@ const retrieveFileData = async (mediaURI: any) => {
 
         
         try {
-            const _data = await axios.get(mediaURI, {timeout:30000, responseType: "arraybuffer" })
+            const _data = await axios.get(mediaURI, {timeout:60000, responseType: "arraybuffer" })
                 .then((data) => data.data ? data.data : undefined)
                 .catch((err) => {
                     return {
