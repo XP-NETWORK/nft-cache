@@ -1,7 +1,7 @@
 import NFT, { INFT } from '../models/nft'
 import { s3 } from "../s3/s3Client";
 import { bucket_name, bot, chat_id } from '../helpers/consts'
-import { dataToNFTObj, dataToParams, paramsForFile } from '../helpers/helpers';
+import { dataToNFTObj, dataToParams, paramsForFile,dataToNFTObjFile } from '../helpers/helpers';
 import axios from 'axios';
 import fs from 'fs'
 import { sendInitMessage, sendNewNFTCachedMessage, sendNFTexistsMessage, sendUploadedMessage } from '../helpers/telegram';
@@ -510,7 +510,7 @@ const formatURI = (uri: string) => {
     if (!uri) {
         return -4
     }
-    if (uri.indexOf("ipfs://") === 0) {
+    else if (uri.indexOf("ipfs://") === 0) {
         console.log("2.1.1 formatting uri to https")
         let _uri = uri
         _uri = uri.slice(7)
@@ -592,14 +592,11 @@ export const fileAdder = async (req: any, res: any) => {
         return
     }
     try {
-        console.log(uri);
 
         const location = await fileUpload(uri, res)
-
-        console.log("this is the location: ", location)
-
-        const obj = dataToNFTObj(0, 0, 0, { uri: location }, {})
-
+        const obj = dataToNFTObjFile( uri,{uri: location})
+        console.log("alex: ",uri);
+        
         if (obj) {
             await NFT.addToCacheFile(obj, res)
             return
