@@ -488,7 +488,7 @@ const retrieveFileData = async (mediaURI: any) => {
         try {
 
             //if doesn't work change back to arraybuffer!!!
-            const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "stream" })
+            const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
                 .then((data) => data.data ? data.data : undefined)
                 .catch((err) => {
                     return {
@@ -559,9 +559,11 @@ export const fileAdder = async (req: any, res: any) => {
         })
 
         const sizeInMB = size / (1024 * 1024);
-        console.log("files total: "+countertotal++)
+        countertotal++
+        console.log("files total: "+countertotal)
         if (sizeInMB < 5) {
-            console.log("files total: "+countersmallFiles++)
+            countersmallFiles++
+            console.log("small files total: "+countersmallFiles)
             const location = await fileUpload(uri, res)
         }
         const obj = dataToNFTObjFile(uri, { uri: location })
