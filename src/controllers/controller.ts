@@ -6,6 +6,7 @@ import axios from 'axios';
 import fs from 'fs'
 import { sendInitMessage, sendNewNFTCachedMessage, sendNFTexistsMessage, sendUploadedMessage } from '../helpers/telegram';
 import { rejects } from 'assert';
+import request from 'request'
 
 //to test the connection
 export const test = (req: any, res: any) => {
@@ -578,6 +579,9 @@ const fileUpload = async (uri: string, res: any) => {
 
                 let params: any = paramsForFile(uri)
 
+                request({url:uri,method:"HEAD"},(err,response,body)=>{
+                    console.log("these are the headers: ",response.headers)
+                })
 
                 //checking inside the bucket to see if we don't have duplicates
                 s3.listObjects(searchParams, (err, data) => {
