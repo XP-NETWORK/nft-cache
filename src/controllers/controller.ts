@@ -538,7 +538,8 @@ const checkData = (data: any, res: any) => {
 
 
 export const fileAdder = async (req: any, res: any) => {
-
+    let countertotal=0
+    let countersmallFiles=0
     const uri = req.body.uri
     if (!uri) {
         res.send("no uri received")
@@ -558,7 +559,9 @@ export const fileAdder = async (req: any, res: any) => {
         })
 
         const sizeInMB = size / (1024 * 1024);
+        console.log("files total: "+countertotal++)
         if (sizeInMB < 5) {
+            console.log("files total: "+countersmallFiles++)
             const location = await fileUpload(uri, res)
         }
         const obj = dataToNFTObjFile(uri, { uri: location })
