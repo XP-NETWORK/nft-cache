@@ -4,6 +4,9 @@ import mongoose from "mongoose";
 import cors from 'cors'
 import router from './rouetes/routes'
 import { mongoURL } from "./helpers/consts";
+import timeout from 'connect-timeout'
+
+
 
 config()
 const port = process.env.PORT || 3030;
@@ -46,6 +49,8 @@ app.use((req, res, next) => {
     }
     next();
 });
+
+app.use(timeout('60s'))
 
 app.use("/nft", router)
 
