@@ -578,7 +578,6 @@ const fileUpload = async (uri: string, res: any) => {
 
                 let params: any = paramsForFile(uri)
 
-                
 
                 //checking inside the bucket to see if we don't have duplicates
                 s3.listObjects(searchParams, (err, data) => {
@@ -590,7 +589,7 @@ const fileUpload = async (uri: string, res: any) => {
                         for (let i = 0; i < data.Contents.length; i++) {
                             if ((data.Contents)[i].Key === params.Key) {
                                 const message = `object with key ${params.Key} already exists in bucket`
-                         
+                                console.log(`key exists: ${params.Key}`)
                                 return {
                                     num: -8,
                                     data: message
