@@ -82,6 +82,7 @@ export const addNFT = async (req: any, res: any) => {
             res.send("no format was sent in metadata, please add the format and send again")
             return
         }
+
         let formattedImageURI: any
         if (metaData.image) {
             formattedImageURI = checker(metaData.image)
@@ -137,82 +138,109 @@ export const addNFT = async (req: any, res: any) => {
         const params: any = dataToParams(chainId, tokenId, contract, imageNvideo)
         //const misc = req.body.misc
         let obj: any
+
+        const myUri: any = getMyUri(metaData)
+
         if (misc === undefined) {
-            obj = dataToNFTObj(chainId, tokenId, contract, metaData, undefined)
+            obj = dataToNFTObj(myUri, chainId, tokenId, contract, metaData, undefined)
         }
         else {
-            obj = dataToNFTObj(chainId, tokenId, contract, metaData, misc)
+            obj = dataToNFTObj(myUri, chainId, tokenId, contract, metaData, misc)
         }
 
         let newMetaData = metaData//new meta data
         let errorObj: any = 0
 
+        try {
 
-        //when image
-        if (formattedImageURI && !formattedVideoURI) {
-            await uploadImage(params, metaData, res)
-                .then(async (imageURI) => {
 
-                    newMetaData.image = imageURI
-                    obj.metaData = newMetaData
-                    await NFT.addToCache(obj, res, 1)
-                })
-                .catch((err) => {
-                    res.send("error in image uploading is: " + err)
-                })
+            //when image
+            if (formattedImageURI && !formattedVideoURI) {
+                try {
+                    await uploadImage(params, metaData, res)
+                        .then(async (imageURI: any) => {
+                            
+                            if (imageURI.num < 0) {
+                                res.send(`err num: ${imageURI.num}. error: ` + imageURI.data)
+                                return
+                            }
+                            
+                            newMetaData.image = imageURI
+                            obj.metaData = newMetaData
+                            await NFT.addToCache(obj, res, 1)
+                        })
+                        .catch((err) => {
+                            res.send("error in image uploading is: " + err)
+                        })
 
-            return
-        }
-        //when video
-        if (!formattedImageURI && formattedVideoURI) {
-            await uploadVideo(params, metaData, res)
-                .then(async (videoURI) => {
-
-                    newMetaData.animation_url = videoURI
-                    obj.metaData = newMetaData
-                    await NFT.addToCache(obj, res, 1)
                     return
-                })
-                .catch((err) => {
-                    res.send("error in video uploading is: " + err)
-                })
-        }
+                } catch (error) {
+                    res.send(error)
+                }
+            }
+            //when video
+            if (!formattedImageURI && formattedVideoURI) {
+                try {
+                    await uploadVideo(params, metaData, res)
+                        .then(async (videoURI) => {
 
-        if (formattedImageURI && formattedVideoURI) {
-
-
-
-
-            const { imageParams, videoParams } = params
-            await uploadImage(imageParams, metaData, res)
-                .then(async (imageURI) => {
-                    newMetaData.image = imageURI
-
-                })
-                .catch((err) => {
-                    res.send("error in image uploading is: " + err)
-                })
-
-            await uploadVideo(videoParams, metaData, res)
-                .then(async (videoURI) => {
-                    newMetaData.video = videoURI
+                            newMetaData.animation_url = videoURI
+                            obj.metaData = newMetaData
+                            await NFT.addToCache(obj, res, 1)
+                            return
+                        })
+                        .catch((err) => {
+                            res.send("error in video uploading is: " + err)
+                        })
+                } catch (error) {
+                    res.send(error)
+                }
+            }
 
 
-                })
+            if (formattedImageURI && formattedVideoURI) {
 
-                .catch((err) => {
-                    res.send("error in image and video uploading is: " + err)
-                })
-            await NFT.addToCache(obj, res, 1)
+                try {
 
-            obj.metaData = newMetaData
+
+                    const { imageParams, videoParams } = params
+                    await uploadImage(imageParams, metaData, res)
+                        .then(async (imageURI) => {
+                            newMetaData.image = imageURI
+
+                        })
+                        .catch((err) => {
+                            res.send("error in image uploading is: " + err)
+                        })
+
+                    await uploadVideo(videoParams, metaData, res)
+                        .then(async (videoURI) => {
+                            newMetaData.video = videoURI
+
+
+                        })
+
+                        .catch((err) => {
+                            res.send("error in image and video uploading is: " + err)
+                        })
+                    await NFT.addToCache(obj, res, 1)
+
+                    obj.metaData = newMetaData
+                    return
+                } catch (error) {
+                    res.send(error)
+                    return
+                }
+            }
+        } catch (error) {
+            res.send(error)
             return
-
         }
 
 
     } catch (err) {
         res.send(err)
+        return
     }
 
 
@@ -231,13 +259,23 @@ export const addNFT = async (req: any, res: any) => {
 
 //inner function to upload an image to AWS s3 bucket and retrieve the image uri back
 
+const getMyUri = (metaData: any) => {
+    if (metaData.animation_url && ((metaData.image === "") || !(metaData.image))) {
+        return metaData.animation_url
+    }
+    else {
+        return metaData.image
+    }
+}
+
 const uploadImage = async (params: any, metaData: any, res: any) => {
     return await new Promise(async (resolve: any, reject: any) => {
 
         try {
             if (!params || !res) {
-                return {
+                throw {
                     num: -1,
+                    data: "no param or res"
                 }
             }
 
@@ -250,22 +288,18 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
 
             try {
 
-
-
                 //checking inside the bucket to see if we don't have duplicates
                 s3.listObjects(searchParams, (err, data) => {
                     if (err) {
-                        console.log("err in s3.listObjects in upload is: " + err)
-                        res.send(err)
-                        return
+                        throw err
                     }
                     if (data.Contents) {
                         for (let i = 0; i < data.Contents.length; i++) {
                             if ((data.Contents)[i].Key === toUpload.Key) {
                                 const message = `object with key ${toUpload.Key} already exists in bucket`
 
-                                return {
-                                    num: -8,
+                                throw {
+                                    num: -2,
                                     data: message
                                 }
                             }
@@ -275,59 +309,83 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                 })
 
             } catch (error) {
-                res.send(error)
-                return
+                throw {
+                    num: -3,
+                    data: error
+                }
             }
 
             //actually retreiving file data (image OR video)
 
 
             let typeBody = params.Body ? params.Body : params.params.Body
+            try {
+                //22222222222222222222222
+                await retrieveFileData(typeBody)
+                    .then(async (data: any) => {
+                        if (!data) {
+                            throw {
+                                num: -9,
+                                data:"no data was received from axios in upload function"
+                            }
+                        }
+                        //22222222222222222222222
 
-            await retrieveFileData(typeBody)
-                .then(async (data: any) => {
-                    if (!data) {
+                        //33333333333333333333333
+                        //checks what the data is- if error or a valid file
+                        
+                        /*const maybeError: any = checkData(data, res)
+                        if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
 
-                        res.send("no data was received from axios in upload function")
-                        return
-                    }
-
-                    //checks what the data is- if error or a valid file
-                    const maybeError: any = checkData(data, res)
-                    if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
-
-                        res.send(maybeError.message)
-                        return
-                    }
-
-                    toUpload["Body"] = data.data
-
-                    let newImage = s3.upload(toUpload, async (err: any, data: any) => {
-                        if (err) {
-
-                            res.send("error in s3.upload inside upload function inside addNFT function: " + err)
+                            res.send(maybeError.message)
                             return
                         }
+                        //33333333333333333333333*/
+                        toUpload["Body"] = data.data
+                        try {
 
 
-                    }).promise().then(n => n.Location);
-
-                    resolve(newImage)
-
-                })
-                .catch((error) => {
-
-                    res.send("error in retrieveFileData for image in upload function is: " + error)
-                    return
-                })
+                            let newImage = s3.upload(toUpload, async (err: any, data: any) => {
+                                if (err) {
+                                    throw {
+                                        num: -4,
+                                        data: err
+                                    }
+                                }
 
 
+                            }).promise().then(n => n.Location);
 
+                            resolve(newImage)
+                        } catch (error) {
+                            throw {
+                                num:-5,
+                                data:error
+                            }
+                        }
+
+                    })
+                    .catch((error) => {
+                        throw {
+                            num: -6,
+                            data: error
+                        }
+                    })
+
+
+            } catch (error) {
+                throw {
+                    num: -7,
+                    data: error
+                }
+            }
 
 
         } catch (error) {
-
-            res.status(400).send("general error in upload func is: " + error)
+            throw {
+                num: -8,
+                data: error
+            }
         }
 
 
@@ -338,7 +396,7 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
 
         try {
             if (!params || !res) {
-                return {
+                throw {
                     num: -1,
                 }
             }
@@ -359,7 +417,7 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
                     for (let i = 0; i < data.Contents.length; i++) {
                         if ((data.Contents)[i].Key === toUpload.Key) {
                             const message = `object with key ${toUpload.Key} already exists in bucket`
-                            return {
+                            throw {
                                 num: -8,
                                 data: message
                             }
@@ -375,24 +433,24 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
             await retrieveFileData(typeBody)
                 .then(async (data: any) => {
                     if (!data) {
-                        res.send("no data was received from axios in upload function")
-                        return
+                        throw "no data was received from axios in upload function"
                     }
 
                     //checks what the data is- if error or a valid file
+
+                    /*
                     const maybeError: any = checkData(data, res)
                     if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
                         res.send(maybeError.message)
                         return
-                    }
+                    }*/
 
                     toUpload["Body"] = data.data
 
                     let newVideo = await s3.upload(toUpload, async (err: any, data: any) => {
                         if (err) {
 
-                            res.send("error in s3.upload inside upload function inside addNFT function: " + err)
-                            return
+                            throw err
                         }
 
                     }).promise().then(n => (n.Location))
@@ -401,8 +459,7 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
                 })
                 .catch((error) => {
 
-                    res.send("error in retrieveFileData for image in upload function is: " + error)
-                    return
+                    throw error
                 })
 
 
@@ -410,7 +467,7 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
 
         } catch (error) {
 
-            res.status(400).send("general error in upload func is: " + error)
+            throw error
         }
 
 
@@ -492,8 +549,8 @@ const retrieveFileData = async (mediaURI: any) => {
     return await new Promise(async (resolve: any, reject: any) => {
         if (!mediaURI) {
 
-            return {
-                num: -5,
+            throw {
+                num: -10,
                 message: "no mediaURI received in retrieveFileData"
             }
         }
@@ -503,7 +560,7 @@ const retrieveFileData = async (mediaURI: any) => {
             const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
                 .then((data) => data.data ? data.data : undefined)
                 .catch((err) => {
-                    return {
+                    throw {
                         num: -6,
                         message: "problem with axios in retrieveFileData function inside axios promise is: " + err
                     }
@@ -515,8 +572,11 @@ const retrieveFileData = async (mediaURI: any) => {
                 })
             }
         } catch (error) {
-            //console.log("error: "+error)
-            reject(error)
+            throw {
+                num:-11,
+                data:error
+            }
+            //reject(error)
         }
     })
 }
@@ -524,8 +584,8 @@ const retrieveFileData = async (mediaURI: any) => {
 //function to check data received from retrieveFileData function
 const checkData = (data: any, res: any) => {
     if (!data || !res) {
-        return {
-            num: -7,
+        throw {
+            num: -12,
             message: "either data or res were not received in checkData function"
         }
     }

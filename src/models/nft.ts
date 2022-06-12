@@ -37,39 +37,44 @@ schema.statics.getByData = async function (contract: string, chainId: string, to
 
 
 schema.statics.addToCache = async function (obj: any, res: any, mediasAdded: number) {
-    let NFT = await this.findOne({ contract: obj.contract, tokenId: obj.tokenId })    
-    if (NFT !== null) {
-        sendNFTexistsMessage(NFT._id)
-        res.send(`such NFT already exists in cache with id: ${NFT._id}`)
+    try {
+
+
+        let NFT = await this.findOne({ contract: obj.contract, tokenId: obj.tokenId })
+        if (NFT !== null) {
+            sendNFTexistsMessage(NFT._id)
+            res.send(`such NFT already exists in cache with id: ${NFT._id}`)
+            return
+        } else {
+            res.send(obj)
+            new Promise((reslove, rejects) => {
+                try {
+                    reslove(this.create(obj));
+                } catch {
+                    rejects("error")
+                }
+            })
+        }
+
+
+        //FIX THAT MESSAGE VVVVV
+
+        //sendNewNFTCachedMessage(obj.chainId, obj.tokenId, obj.contract, obj.metaData.media, obj.metaData.format)
         return
-    } else {        
-        res.send(obj)
-        new Promise((reslove, rejects) => {
-            try {
-                reslove(this.create(obj));
-            } catch {
-                rejects("error")
-            }
-        })
+    } catch (error) {
+        res.send(error)
     }
-
-
-    //FIX THAT MESSAGE VVVVV
-
-    //sendNewNFTCachedMessage(obj.chainId, obj.tokenId, obj.contract, obj.metaData.media, obj.metaData.format)
-    return
-
 
 }
 
 
-schema.statics.addToCacheFile = async function(obj:any,res:any){
-    let NFT = await this.findOne({ uri: obj.uri })    
+schema.statics.addToCacheFile = async function (obj: any, res: any) {
+    let NFT = await this.findOne({ uri: obj.uri })
     if (NFT !== null) {
         sendNFTexistsMessage(NFT._id)
         res.send(obj.metaData)
         return
-    } else {        
+    } else {
         res.send(obj.metaData)
         new Promise((reslove, rejects) => {
             try {
