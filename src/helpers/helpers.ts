@@ -65,9 +65,14 @@ export const dataToNFTObjFile = (uri: any, metaData: any) => {
 
 export const paramsForFile = (uri: string) => {
 
+    const uriArr = uri.split("/")
+    console.log("the arr is: ",uriArr);
+    
+    const uriKey = uriArr[uriArr.length-1]
+
     const params = {
         Bucket: bucket_name,
-        Key: uri,
+        Key: uriKey,
         Body: uri,
         ACL: ACL,
         ContentType: "*/*",

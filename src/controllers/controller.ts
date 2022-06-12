@@ -250,88 +250,88 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
 
             try {
 
-            
-
-            //checking inside the bucket to see if we don't have duplicates
-            s3.listObjects(searchParams, (err, data) => {
-                if (err) {
-                    console.log("err in s3.listObjects in upload is: " + err)
-                    res.send(err)
-                    return
-                }
-                if (data.Contents) {
-                    for (let i = 0; i < data.Contents.length; i++) {
-                        if ((data.Contents)[i].Key === toUpload.Key) {
-                            const message = `object with key ${toUpload.Key} already exists in bucket`
-
-                            return {
-                                num: -8,
-                                data: message
-                            }
-                        }
-
-                    }
-                }
-            })
-
-        } catch (error) {
-            res.send(error)
-            return
-        }
-
-        //actually retreiving file data (image OR video)
 
 
-        let typeBody = params.Body ? params.Body : params.params.Body
-
-        await retrieveFileData(typeBody)
-            .then(async (data: any) => {
-                if (!data) {
-
-                    res.send("no data was received from axios in upload function")
-                    return
-                }
-
-                //checks what the data is- if error or a valid file
-                const maybeError: any = checkData(data, res)
-                if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
-
-                    res.send(maybeError.message)
-                    return
-                }
-
-                toUpload["Body"] = data.data
-
-                let newImage = s3.upload(toUpload, async (err: any, data: any) => {
+                //checking inside the bucket to see if we don't have duplicates
+                s3.listObjects(searchParams, (err, data) => {
                     if (err) {
+                        console.log("err in s3.listObjects in upload is: " + err)
+                        res.send(err)
+                        return
+                    }
+                    if (data.Contents) {
+                        for (let i = 0; i < data.Contents.length; i++) {
+                            if ((data.Contents)[i].Key === toUpload.Key) {
+                                const message = `object with key ${toUpload.Key} already exists in bucket`
 
-                        res.send("error in s3.upload inside upload function inside addNFT function: " + err)
+                                return {
+                                    num: -8,
+                                    data: message
+                                }
+                            }
+
+                        }
+                    }
+                })
+
+            } catch (error) {
+                res.send(error)
+                return
+            }
+
+            //actually retreiving file data (image OR video)
+
+
+            let typeBody = params.Body ? params.Body : params.params.Body
+
+            await retrieveFileData(typeBody)
+                .then(async (data: any) => {
+                    if (!data) {
+
+                        res.send("no data was received from axios in upload function")
                         return
                     }
 
+                    //checks what the data is- if error or a valid file
+                    const maybeError: any = checkData(data, res)
+                    if (maybeError.num === -7 || maybeError.num === -6 || maybeError.num === -5) {
 
-                }).promise().then(n => n.Location);
+                        res.send(maybeError.message)
+                        return
+                    }
 
-                resolve(newImage)
+                    toUpload["Body"] = data.data
 
-            })
-            .catch((error) => {
+                    let newImage = s3.upload(toUpload, async (err: any, data: any) => {
+                        if (err) {
 
-                res.send("error in retrieveFileData for image in upload function is: " + error)
-                return
-            })
-
-
-
-
-
-    } catch (error) {
-
-        res.status(400).send("general error in upload func is: " + error)
-    }
+                            res.send("error in s3.upload inside upload function inside addNFT function: " + err)
+                            return
+                        }
 
 
-})
+                    }).promise().then(n => n.Location);
+
+                    resolve(newImage)
+
+                })
+                .catch((error) => {
+
+                    res.send("error in retrieveFileData for image in upload function is: " + error)
+                    return
+                })
+
+
+
+
+
+        } catch (error) {
+
+            res.status(400).send("general error in upload func is: " + error)
+        }
+
+
+    })
 }
 const uploadVideo = async (params: any, metaData: any, res: any) => {
     return await new Promise(async (resolve: any, reject: any) => {
@@ -593,28 +593,31 @@ const fileUpload = async (uri: string, res: any) => {
 
                 let params: any = paramsForFile(uri)
 
+                try {
 
-                //checking inside the bucket to see if we don't have duplicates
-                s3.listObjects(searchParams, (err, data) => {
-                    if (err) {
+                    //checking inside the bucket to see if we don't have duplicates
+                    s3.listObjects(searchParams, (err, data) => {
+                        if (err) {
 
-                        res.send(err)
-                    }
-                    if (data.Contents) {
-                        for (let i = 0; i < data.Contents.length; i++) {
-                            if ((data.Contents)[i].Key === params.Key) {
-                                const message = `object with key ${params.Key} already exists in bucket`
-                                console.log(`key exists: ${params.Key}`)
-                                return {
-                                    num: -8,
-                                    data: message
-                                }
-                            }
-
+                            res.send(err)
                         }
-                    }
-                })
+                        if (data.Contents) {
+                            for (let i = 0; i < data.Contents.length; i++) {
+                                if ((data.Contents)[i].Key === params.Key) {
+                                    const message = `object with key ${params.Key} already exists in bucket`
+                                    console.log(`key exists: ${params.Key}`)
+                                    return {
+                                        num: -8,
+                                        data: message
+                                    }
+                                }
 
+                            }
+                        }
+                    })
+                } catch (error) {
+                    res.send(error)
+                }
                 //actually retreiving file data (image OR video)
 
 
