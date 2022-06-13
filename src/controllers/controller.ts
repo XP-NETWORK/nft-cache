@@ -163,18 +163,15 @@ export const addNFT = async (req: any, res: any) => {
             if (formattedImageURI && !formattedVideoURI) {
                 //console.log(formattedImageURI)
                 try {
-                    let bytes: any
-                    let MB: any
-                    request({
-                        url: formattedImageURI.item,
-                        method: "HEAD"
-                    }, function (err, response, body) {
+                    
+                    
+                    const MB: any = await getMB(formattedImageURI)
 
-                        bytes = (response.headers['content-length'])
-                        MB = bytes / (1000 * 1000)
+                    console.log("my MB: ", MB);
 
-                    });
-                    if (MB >= 5 || bytes == undefined) {
+
+                    if (MB >= 5 || isNaN(MB)) {
+                        console.log("still going in")
                         await NFT.addToCache(obj, res, 1)
                         return
                     }
@@ -207,20 +204,11 @@ export const addNFT = async (req: any, res: any) => {
             //when video
             if (!formattedImageURI && formattedVideoURI) {
                 try {
-                    let bytes: any
-                    let MB: any
-                    request({
-                        url: formattedVideoURI.item,
-                        method: "HEAD"
-                    }, function (err, response, body) {
+                    const MB: any = await getMB(formattedVideoURI)
 
-                        bytes = (response.headers['content-length'])
-                        MB = bytes / (1000 * 1000)
-
-                    });
-                    if (MB >= 5 || bytes ==undefined) {
+                    if (MB >= 5 || isNaN(MB)) {
                         newMetaData.video/*animation_url*/ = formattedVideoURI.item
-                            obj.metaData = newMetaData
+                        obj.metaData = newMetaData
                         await NFT.addToCache(obj, res, 1)
                         return
                     }
@@ -244,20 +232,9 @@ export const addNFT = async (req: any, res: any) => {
             if (formattedImageURI && formattedVideoURI) {
                 const { imageParams, videoParams } = params
                 try {
-                    let MB: any
-                    let bytes: any
-                    //checking size of file through request and url
-                    request({
-                        url: formattedImageURI.item,
-                        method: "HEAD"
-                    }, function (err, response, body) {
+                    let MB: any = await getMB(formattedImageURI)
 
-                        const bytes: any = (response.headers['content-length'])
-                        MB = bytes / (1000 * 1000)
-                        console.log(MB)
-                    });
-
-                    if (MB >= 5) {
+                    if (MB >= 5 || isNaN(MB)) {
                         //does nothing because file is bigger than 5 MB
                     } else {
 
@@ -274,19 +251,10 @@ export const addNFT = async (req: any, res: any) => {
                         MB = 0
                     }
                     //checking size of file through request and url
-                    request({
-                        url: formattedVideoURI.item,
-                        method: "HEAD"
-                    }, function (err, response, body) {
+                    
+                    MB = await getMB(formattedVideoURI)
 
-                        bytes = (response.headers['content-length'])
-                        console.log("bytes: " + bytes)
-                        MB = bytes / (1000 * 1000)
-                        console.log(MB)
-                    });
-
-
-                    if (MB >= 5 || bytes == undefined) {
+                    if (MB >= 5 || isNaN(MB)) {
                         //does nothing because size of file is bigger than 5 MB
                     } else {
                         await uploadVideo(videoParams, metaData, res)
@@ -339,6 +307,24 @@ export const addNFT = async (req: any, res: any) => {
 //#region Helper functions for addNFT function
 
 //inner function to upload an image to AWS s3 bucket and retrieve the image uri back
+
+const getMB = async (uri: any) => {
+    return await new Promise((resolve: any, reject: any) => {
+        request({
+            url: uri.item,
+            method: "HEAD"
+        }, function (err, response, body) {
+
+            const bytes: any = (response.headers['content-length'])
+            const MB: any = bytes / (1000 * 1000)
+            console.log("MB: " + MB);
+            resolve(MB)
+
+
+        });
+    })
+}
+
 
 const getMyUri = (metaData: any) => {
     if (metaData.animation_url && ((metaData.image === "") || !(metaData.image))) {
@@ -856,7 +842,7 @@ const fileUpload = async (uri: string, res: any) => {
 
 
 //FOR TESTING PURPOSES ONLY!!!!!!
-export const deleteObjects = (req: any, res: any) => {
+/*export const deleteObjects = (req: any, res: any) => {
 
     const params = {
         Bucket: bucket_name || ""
@@ -876,7 +862,7 @@ export const deleteObjects = (req: any, res: any) => {
         }
     })
     res.send("done")
-}
+}*/
 
 
 
