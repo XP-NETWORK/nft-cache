@@ -5,7 +5,7 @@ import { dataToNFTObj, dataToParams, paramsForFile, dataToNFTObjFile } from '../
 import axios from 'axios';
 import fs from 'fs'
 import { sendInitMessage, sendNewNFTCachedMessage, sendNFTexistsMessage, sendUploadedMessage } from '../helpers/telegram';
-
+import request from 'request'
 
 //to test the connection
 export const test = (req: any, res: any) => {
@@ -87,7 +87,7 @@ export const addNFT = async (req: any, res: any) => {
             res.send("no format was sent in metadata, please add the format and send again")
             return
         }
-        
+
         let formattedImageURI: any
         if (metaData.image) {
             formattedImageURI = checker(metaData.image)
@@ -161,7 +161,23 @@ export const addNFT = async (req: any, res: any) => {
 
             //when image
             if (formattedImageURI && !formattedVideoURI) {
+                //console.log(formattedImageURI)
                 try {
+                    let bytes: any
+                    let MB: any
+                    request({
+                        url: formattedImageURI.item,
+                        method: "HEAD"
+                    }, function (err, response, body) {
+
+                        bytes = (response.headers['content-length'])
+                        MB = bytes / (1000 * 1000)
+
+                    });
+                    if (MB >= 5 || bytes == undefined) {
+                        await NFT.addToCache(obj, res, 1)
+                        return
+                    }
                     await uploadImage(params, metaData, res)
                         .then(async (imageURI: any) => {
 
@@ -183,14 +199,29 @@ export const addNFT = async (req: any, res: any) => {
                     return
                 } catch (error) {
 
-                    console.log("what the fuck???!1")
-                    res.send(error)
+                    console.log(error)
+                    res.send(JSON.stringify(error))
                     return
                 }
             }
             //when video
             if (!formattedImageURI && formattedVideoURI) {
                 try {
+                    let bytes: any
+                    let MB: any
+                    request({
+                        url: formattedVideoURI.item,
+                        method: "HEAD"
+                    }, function (err, response, body) {
+
+                        bytes = (response.headers['content-length'])
+                        MB = bytes / (1000 * 1000)
+
+                    });
+                    if (MB >= 5 || bytes ==undefined) {
+                        await NFT.addToCache(obj, res, 1)
+                        return
+                    }
                     await uploadVideo(params, metaData, res)
                         .then(async (videoURI) => {
 
@@ -209,35 +240,68 @@ export const addNFT = async (req: any, res: any) => {
 
 
             if (formattedImageURI && formattedVideoURI) {
-
+                const { imageParams, videoParams } = params
                 try {
+                    let MB: any
+                    let bytes: any
+                    //checking size of file through request and url
+                    request({
+                        url: formattedImageURI.item,
+                        method: "HEAD"
+                    }, function (err, response, body) {
+
+                        const bytes: any = (response.headers['content-length'])
+                        MB = bytes / (1000 * 1000)
+                        console.log(MB)
+                    });
+
+                    if (MB >= 5) {
+                        //does nothing because file is bigger than 5 MB
+                    } else {
+
+                        //const { imageParams, videoParams } = params
+                        await uploadImage(imageParams, metaData, res)
+                            .then(async (imageURI) => {
+                                newMetaData.image = imageURI
+                                //obj.metaData = newMetaData
+                            })
+                            .catch((err) => {
+                                res.send("error in image uploading is: " + err)
+                                return
+                            })
+                        MB = 0
+                    }
+                    //checking size of file through request and url
+                    request({
+                        url: formattedVideoURI.item,
+                        method: "HEAD"
+                    }, function (err, response, body) {
+
+                        bytes = (response.headers['content-length'])
+                        console.log("bytes: " + bytes)
+                        MB = bytes / (1000 * 1000)
+                        console.log(MB)
+                    });
 
 
-                    const { imageParams, videoParams } = params
-                    await uploadImage(imageParams, metaData, res)
-                        .then(async (imageURI) => {
-                            newMetaData.image = imageURI
+                    if (MB >= 5 || bytes == undefined) {
+                        //does nothing because size of file is bigger than 5 MB
+                    } else {
+                        await uploadVideo(videoParams, metaData, res)
+                            .then(async (videoURI) => {
+                                newMetaData.video = videoURI
+                                //obj.metaData = newMetaData
 
-                        })
-                        .catch((err) => {
-                            res.send("error in image uploading is: " + err)
-                            return
-                        })
+                            })
 
-                    await uploadVideo(videoParams, metaData, res)
-                        .then(async (videoURI) => {
-                            newMetaData.video = videoURI
-
-
-                        })
-
-                        .catch((err) => {
-                            console.log(err)
-                            res.send("error in image and video uploading is: " + err)
-                        })
+                            .catch((err) => {
+                                console.log(err)
+                                res.send("error in image and video uploading is: " + err)
+                            })
+                    }
                     await NFT.addToCache(obj, res, 1)
 
-                    obj.metaData = newMetaData
+                    //obj.metaData = newMetaData
                     return
                 } catch (error) {
                     console.log(error)
@@ -591,6 +655,7 @@ const formatURI = (uri: string) => {
 
 }
 
+
 //function to retrieve file data from media uri
 const retrieveFileData = async (mediaURI: any) => {
     return await new Promise(async (resolve: any, reject: any) => {
@@ -603,7 +668,9 @@ const retrieveFileData = async (mediaURI: any) => {
         }
 
 
+
         try {
+
             const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
                 .then((data) => data.data ? data.data : undefined)
                 .catch((err) => {
@@ -754,7 +821,7 @@ const fileUpload = async (uri: string, res: any) => {
                                 let uploaded = await s3.upload(params, async (err: any, data: any) => {
                                     if (err) {
                                         throw new Error(`${err}`)
-                                        
+
                                     }
 
                                 }).promise().then(n => n.Location);
@@ -766,7 +833,7 @@ const fileUpload = async (uri: string, res: any) => {
                         .catch((error) => {
 
                             throw new Error(`${error}`)
-                            
+
                         })
 
 
