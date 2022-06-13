@@ -64,10 +64,11 @@ export const getByData = async (req: any, res: any) => {
 
 export const addNFT = async (req: any, res: any) => {
     sendInitMessage()
-    /*process.on('uncaughtException', err => {
-        console.error('There was an uncaught error', err);
+    process.on('uncaughtException', err => {
+        console.log('There was an uncaught error', err);
+        return
         //process.exit(1); // mandatory (as per the Node.js docs)
-      });*/
+    });
     try {
         const { chainId, tokenId, owner, uri, contract, contractType, metaData, misc } = req.body
         if (!chainId || !tokenId || !contract || !metaData) {
@@ -163,8 +164,8 @@ export const addNFT = async (req: any, res: any) => {
             if (formattedImageURI && !formattedVideoURI) {
                 //console.log(formattedImageURI)
                 try {
-                    
-                    
+
+
                     const MB: any = await getMB(formattedImageURI)
 
                     console.log("my MB: ", MB);
@@ -175,29 +176,34 @@ export const addNFT = async (req: any, res: any) => {
                         await NFT.addToCache(obj, res, 1)
                         return
                     }
-                    await uploadImage(params, metaData, res)
-                        .then(async (imageURI: any) => {
+                    try {
 
-                            if (imageURI.num < 0) {
-                                res.send(`err num: ${imageURI.num}. error: ` + imageURI.data)
+                        await uploadImage(params, metaData, res)
+                            .then(async (imageURI: any) => {
+                                
+                                if (imageURI.num < 0) {
+                                    res.send(`err num: ${imageURI.num}. error: ` + imageURI.data)
+                                    return
+                                }
+
+                                newMetaData.image = imageURI
+                                obj.metaData = newMetaData
+                                await NFT.addToCache(obj, res, 1)
+                            })
+                            .catch((err) => {
+                                console.log("it's in the catch!!!!")
+                                res.send("error in image uploading is: " + err)
                                 return
-                            }
-
-                            newMetaData.image = imageURI
-                            obj.metaData = newMetaData
-                            await NFT.addToCache(obj, res, 1)
-                        })
-                        .catch((err) => {
-                            console.log("it's in the catch!!!!")
-                            res.send("error in image uploading is: " + err)
-                            return
-                        })
-
+                            })
+                    } catch (error) {
+                        res.send(error)
+                        return
+                    }
                     return
                 } catch (error) {
-
-                    console.log(error)
-                    res.send(JSON.stringify(error))
+                    console.log("moo")
+                    console.log(",123123",error)
+                    res.send(error)
                     return
                 }
             }
@@ -251,7 +257,7 @@ export const addNFT = async (req: any, res: any) => {
                         MB = 0
                     }
                     //checking size of file through request and url
-                    
+
                     MB = await getMB(formattedVideoURI)
 
                     if (MB >= 5 || isNaN(MB)) {
@@ -308,6 +314,7 @@ export const addNFT = async (req: any, res: any) => {
 
 //inner function to upload an image to AWS s3 bucket and retrieve the image uri back
 
+//a function to a get a file's size in MB from the url
 const getMB = async (uri: any) => {
     return await new Promise((resolve: any, reject: any) => {
         request({
@@ -325,7 +332,7 @@ const getMB = async (uri: any) => {
     })
 }
 
-
+//a function to get the image's/video's uri
 const getMyUri = (metaData: any) => {
     if (metaData.animation_url && ((metaData.image === "") || !(metaData.image))) {
         return metaData.animation_url
@@ -335,6 +342,7 @@ const getMyUri = (metaData: any) => {
     }
 }
 
+//function to upload image to AWS
 const uploadImage = async (params: any, metaData: any, res: any) => {
     return await new Promise(async (resolve: any, reject: any) => {
 
@@ -374,8 +382,7 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                             }
 
                         }
-                    } catch (e) {
-
+                    } catch (e) { 
                         console.log(e);
                         throw new Error(`${e}`)
                     }
@@ -383,6 +390,8 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                 })
 
             } catch (error) {
+                console.log("moo?")
+                console.log(error)
                 throw new Error(`{
                     num: -3,
                     data: ${error}
@@ -465,6 +474,8 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
 
     })
 }
+
+//function to upload video to AWS
 const uploadVideo = async (params: any, metaData: any, res: any) => {
     return await new Promise(async (resolve: any, reject: any) => {
 
