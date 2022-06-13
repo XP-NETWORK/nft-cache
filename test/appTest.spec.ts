@@ -44,18 +44,18 @@ describe("GET getByURI", () => {
 
         const result: any = await chai.request(server).post("/nft/add").send(obj)
 
-        console.log("that's the uri: ",result.body);
+        console.log("that's the uri: ",result.body.uri);
         
 
         chai.request(server).get(`/nft/uri?uri=${result.body.uri}`).end((err, res) => {
         if (err) {
-            console.log(err)
-            done()
+            console.log("moo: ",err)
+            return
         }
         console.log("this is response: ",res.body)
         res.status.should.eq(200)
         res.body.should.have.property("image")
-        done()
+        
     })
     })
 })
