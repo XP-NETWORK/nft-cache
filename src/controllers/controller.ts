@@ -219,13 +219,15 @@ export const addNFT = async (req: any, res: any) => {
 
                     });
                     if (MB >= 5 || bytes ==undefined) {
+                        newMetaData.video/*animation_url*/ = formattedVideoURI.item
+                            obj.metaData = newMetaData
                         await NFT.addToCache(obj, res, 1)
                         return
                     }
                     await uploadVideo(params, metaData, res)
                         .then(async (videoURI) => {
 
-                            newMetaData.animation_url = videoURI
+                            newMetaData.video/*animation_url*/ = videoURI
                             obj.metaData = newMetaData
                             await NFT.addToCache(obj, res, 1)
                             return
