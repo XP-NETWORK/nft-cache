@@ -2,6 +2,7 @@ import request from 'supertest'
 import chai, { expect } from 'chai'
 import server from '../src/index'
 import chaiHttp from 'chai-http'
+import console from 'console'
 
 const should = chai.should()
 
@@ -62,5 +63,25 @@ describe("GET getByURI", () => {
 
     })
 
+    it("test 2 - no url given",async ()=>{
+        const res = await chai.request(server).get(`/nft/uri?uri=abc`)
+        console.log("res is: ",res)
+        res.status.should.eq(401)
+        res.text.should.be("no url given")
+    })
+
+    it("test 3 - try to get a non-existing nft", async ()=>{
+        const res = await chai.request(server).get(`/nft/uri?uri=abc`)
+        console.log("something is: ", res)
+        res.status.should.eq(200)
+        res.text.should.be("no such NFT found")
+        
+    })
+
+})
+
+describe("GET getByData",()=>{
+
     
+
 })
