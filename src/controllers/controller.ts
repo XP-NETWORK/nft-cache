@@ -59,14 +59,14 @@ export const getByData = async (req: any, res: any) => {
 
 
 export const addNFT = async (req: any, res: any) => {
-    sendInitMessage()
     // process.on('uncaughtException', err => {
-    //     console.log('There was an uncaught error', err);
-
-    //     return
-    //     //process.exit(1); // mandatory (as per the Node.js docs)
-    // });
-    try {
+        //     console.log('There was an uncaught error', err);
+        
+        //     return
+        //     //process.exit(1); // mandatory (as per the Node.js docs)
+        // });
+        try {
+        sendInitMessage()
         const { chainId, tokenId, owner, uri, contract, contractType, metaData, misc } = req.body
         if (!chainId || !tokenId || !contract || !metaData) {
             console.log("chainId/tokenId/contract/metaData is missing")
@@ -381,7 +381,7 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                             resolve(toUpload.Body)
                         }
 
-                    }).promise().then(n => n).catch(e => e)
+                    }).promise().then(n => n)
 
                     /*s3.listObjects(searchParams, (err, data) => {
                         try {
@@ -554,7 +554,7 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
                         })
                         .catch((error) => {
 
-                            throw new Error(`${error}`)
+                            // throw new Error(`${error}`)
                         })
 
                 } catch (error) {
@@ -839,7 +839,7 @@ const fileUpload = async (uri: string, res: any) => {
                         })
                         .catch((error) => {
 
-                            throw new Error(`${error}`)
+                            // throw new Error(`${error}`)
 
                         })
 
