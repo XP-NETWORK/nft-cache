@@ -60,12 +60,12 @@ export const getByData = async (req: any, res: any) => {
 
 export const addNFT = async (req: any, res: any) => {
     // process.on('uncaughtException', err => {
-        //     console.log('There was an uncaught error', err);
-        
-        //     return
-        //     //process.exit(1); // mandatory (as per the Node.js docs)
-        // });
-        try {
+    //     console.log('There was an uncaught error', err);
+
+    //     return
+    //     //process.exit(1); // mandatory (as per the Node.js docs)
+    // });
+    try {
         sendInitMessage()
         const { chainId, tokenId, owner, uri, contract, contractType, metaData, misc } = req.body
         if (!chainId || !tokenId || !contract || !metaData) {
@@ -332,10 +332,7 @@ const getMB = async (uri: any) => {
             });
         })
     } catch (e) {
-        throw new Error(`{
-        num: -8,
-        data: ${e}
-    }`)
+        return
     }
 }
 
@@ -356,10 +353,7 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
 
             try {
                 if (!params || !res) {
-                    throw new Error(`{
-                    num: -1,
-                    data: "no param or res"
-                }`)
+                    return
                 }
 
                 // let toUpload: any = params.params
@@ -410,10 +404,8 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
 
                 } catch (error) {
                     console.log(error)
-                    throw new Error(`{
-                    num: -3,
-                    data: ${error}
-                }`)
+
+                    return
                 }
 
                 //actually retreiving file data (image OR video)
@@ -424,20 +416,14 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                     await retrieveFileData(typeBody)
                         .then(async (data: any) => {
                             if (!data) {
-                                throw new Error(`{
-                                num: -9,
-                                data: "no data was received from axios in upload function"
-                            }`)
+                                return
                             }
                             toUpload["Body"] = data.data
                             try {
                                 let newImage = s3.upload(toUpload, async (err: any, data: any) => {
                                     if (err) {
 
-                                        throw new Error(`{
-                                        num: -4,
-                                        data: ${err}
-                                    }`)
+                                        return
                                     }
 
 
@@ -445,43 +431,30 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
 
                                 resolve(newImage)
                             } catch (error) {
-                                throw new Error(`{
-                                num: -5,
-                                data: ${error}
-                            }`)
+                                return
                             }
 
                         })
                         .catch((error) => {
-                            throw new Error(`{
-                            num: -6,
-                            data: ${error}
-                        }`)
+                            return
+
                         })
 
 
                 } catch (error) {
-                    throw new Error(`{
-                    num: -7,
-                    data: ${error}
-                }`)
+                    return
                 }
 
 
             } catch (error) {
-                throw new Error(`{
-                num: -8,
-                data: ${error}
-            }`)
+                return
+
             }
 
 
         })
     } catch (e) {
-        throw new Error(`{
-        num: -8,
-        data: ${e}
-    }`)
+        return
     }
 }
 
@@ -492,9 +465,7 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
 
             try {
                 if (!params || !res) {
-                    throw new Error(` {
-                    num: -1,no params or res
-                }`)
+                    return
                 }
 
                 let toUpload: any = params.params ? params.params : params
@@ -516,7 +487,7 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
                     })
 
                 } catch (error) {
-                    throw new Error(`${error}`)
+                    return
                 }
 
                 //actually retreiving file data (image OR video)
@@ -526,7 +497,7 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
                     await retrieveFileData(typeBody)
                         .then(async (data: any) => {
                             if (!data) {
-                                throw new Error("no data was received from axios in upload function")
+                                return
                             }
 
                             //checks what the data is- if error or a valid file
@@ -543,37 +514,34 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
                                 let newVideo = await s3.upload(toUpload, async (err: any, data: any) => {
                                     if (err) {
 
-                                        throw new Error(`${err}`)
+                                        return
                                     }
 
                                 }).promise().then(n => (n.Location))
                                 resolve(newVideo)
                             } catch (error) {
-                                throw new Error(`${error}`)
+                                return
                             }
                         })
                         .catch((error) => {
 
-                            // throw new Error(`${error}`)
+                            return
                         })
 
                 } catch (error) {
-                    throw new Error(`${error}`)
+                    return
                 }
 
 
             } catch (error) {
 
-                throw new Error(`${error}`)
+                return
             }
 
 
         })
     } catch (e) {
-        throw new Error(`{
-        num: -8,
-        data: ${e}
-    }`)
+        return
     }
 }
 
@@ -581,10 +549,7 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
 const checker = (uri: string) => {
     if (!uri) {
 
-        throw new Error(`{
-            num: -2,
-            item: "no uri was sent or res was not received"
-        }`)
+        return
 
     }
 
@@ -603,10 +568,7 @@ const checker = (uri: string) => {
         if (cond) {
             const newUri = formatURI(uri)
             if (!newUri) {
-                throw new Error(`{
-                    num: -4,
-                    item: "no uri was sent to formatURI function"
-                }`)
+                return
 
 
             }
@@ -620,10 +582,7 @@ const checker = (uri: string) => {
         }
 
     } catch (error) {
-        throw new Error(`{
-            num: -3,
-            item: ${error}
-        }`)
+        return
     }
 
 }
@@ -632,7 +591,7 @@ const checker = (uri: string) => {
 const formatURI = (uri: string) => {
 
     if (!uri) {
-        throw new Error("no uri sent to formatURI")
+        return
     }
     else if (uri.indexOf("ipfs://") === 0) {
 
@@ -653,11 +612,7 @@ const retrieveFileData = async (mediaURI: any) => {
     try {
         return await new Promise(async (resolve: any, reject: any) => {
             if (!mediaURI) {
-
-                throw new Error(`{
-                num: -10,
-                message: "no mediaURI received in retrieveFileData"
-            }`)
+                return
             }
 
             try {
@@ -675,28 +630,19 @@ const retrieveFileData = async (mediaURI: any) => {
                     })
                 }
             } catch (error) {
-                throw new Error(`{
-                num: -11,
-                data: error
-            }`)
+                return
                 //reject(error)
             }
         })
     } catch (e) {
-        throw new Error(`{
-            num: -10,
-            message: "Error retrieveFileData"
-        }`)
+        return
     }
 }
 
 //function to check data received from retrieveFileData function
 const checkData = (data: any, res: any) => {
     if (!data || !res) {
-        throw new Error(`{
-            num: -12,
-            message: "either data or res were not received in checkData function"
-        }`)
+        return
     }
 
     switch (data.num) {
@@ -738,7 +684,7 @@ export const fileAdder = async (req: any, res: any) => {
             return
         }
     } catch (e) {
-        throw new Error(`${e}`)
+        return
     }
 
 
@@ -751,10 +697,7 @@ const fileUpload = async (uri: string, res: any) => {
 
             try {
                 if (!uri || !res) {
-                    throw new Error(` {
-                        num: -1,
-                        message: no uri or res in fileUpload
-                    }`)
+                    return
                 }
 
                 // const searchParams = {
@@ -806,7 +749,7 @@ const fileUpload = async (uri: string, res: any) => {
                         }
                     })*/
                 } catch (error) {
-                    throw new Error(`${error}`)
+                    return
                 }
                 //actually retreiving file data (image OR video)
 
@@ -817,7 +760,7 @@ const fileUpload = async (uri: string, res: any) => {
                         .then(async (data: any) => {
                             if (!data) {
 
-                                throw new Error("no data was received from axios in upload function")
+                                return
 
                             }
 
@@ -827,37 +770,37 @@ const fileUpload = async (uri: string, res: any) => {
                             try {
                                 let uploaded = await s3.upload(params, async (err: any, data: any) => {
                                     if (err) {
-                                        throw new Error(`${err}`)
+                                        return
 
                                     }
 
                                 }).promise().then(n => n.Location);
                                 resolve(uploaded)
                             } catch (e) {
-                                throw new Error(`${e}`)
+                                return
                             }
                         })
                         .catch((error) => {
 
-                            // throw new Error(`${error}`)
+                            return
 
                         })
 
 
                 } catch (error) {
-                    throw new Error(`${error}`)
+                    return
                 }
 
 
             } catch (error) {
 
-                throw new Error(`${error}`)
+                return
             }
 
 
         })
     } catch (e) {
-        throw new Error(`${e}`)
+        return
 
     }
 }
