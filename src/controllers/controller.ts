@@ -333,7 +333,7 @@ const getMB = async (uri: any) => {
 
             });
         })
-    } catch () {
+    } catch {
     }
 }
 
