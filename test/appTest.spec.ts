@@ -217,16 +217,16 @@ describe("POST add NFT", () => {
 
         let okayArr: boolean[] = []
 
-        console.log("won't upload: ", (exampleNFTs.data)[4])
+        // for await (const nft of exampleNFTs.data) {
+        exampleNFTs.data.forEach(async (nft: any) => {
 
-        /*for await (const nft of exampleNFTs.data) {
-            console.log("current nft: ",nft)
+            // console.log("current nft: ", nft)
             // console.log("i = " + i)
             //console.log("this is current the NFT data: ", (exampleNFTs.data)[i])
-            
+
             await axios.get(nft.uri)
                 .then(async (n) => {
-            
+
                     const obj = {
                         "chainId": nft.native.chainId,
                         "tokenId": nft.native.tokenId,
@@ -254,15 +254,15 @@ describe("POST add NFT", () => {
                         process.exit(0)
                     }*/
 
-                /*})
+                })
                 .catch((err) => {
-                    console.log("problem with axios")
-                    
+                    console.log("problem with axios"+err)
+
                 })
 
 
 
-        }*/
+        })
 
         console.log("this is okayArr: ", okayArr)
 
