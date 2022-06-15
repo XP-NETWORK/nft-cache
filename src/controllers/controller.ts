@@ -7,11 +7,6 @@ import fs from 'fs'
 import { sendInitMessage, sendNewNFTCachedMessage, sendNFTexistsMessage, sendUploadedMessage } from '../helpers/telegram';
 import request from 'request'
 
-//to test the connection
-export const test = (req: any, res: any) => {
-    console.log("works")
-    res.status(200).send("works!!!")
-}
 
 //get the metadata back by the url (retrieving ONLY the metadata)
 export const getByURI = async (req: any, res: any) => {
@@ -64,11 +59,12 @@ export const getByData = async (req: any, res: any) => {
 
 export const addNFT = async (req: any, res: any) => {
     sendInitMessage()
-    process.on('uncaughtException', err => {
-        console.log('There was an uncaught error', err);
-        return
-        //process.exit(1); // mandatory (as per the Node.js docs)
-    });
+    // process.on('uncaughtException', err => {
+    //     console.log('There was an uncaught error', err);
+
+    //     return
+    //     //process.exit(1); // mandatory (as per the Node.js docs)
+    // });
     try {
         const { chainId, tokenId, owner, uri, contract, contractType, metaData, misc } = req.body
         if (!chainId || !tokenId || !contract || !metaData) {
@@ -172,7 +168,7 @@ export const addNFT = async (req: any, res: any) => {
 
 
                     if (MB >= 5 || isNaN(MB)) {
-                        console.log("still going in")
+                        //console.log("still going in")
                         await NFT.addToCache(obj, res, 1)
                         return
                     }
@@ -180,7 +176,7 @@ export const addNFT = async (req: any, res: any) => {
 
                         await uploadImage(params, metaData, res)
                             .then(async (imageURI: any) => {
-                                
+
                                 if (imageURI.num < 0) {
                                     res.send(`err num: ${imageURI.num}. error: ` + imageURI.data)
                                     return
@@ -202,7 +198,7 @@ export const addNFT = async (req: any, res: any) => {
                     return
                 } catch (error) {
                     console.log("moo")
-                    console.log(",123123",error)
+                    console.log(",123123", error)
                     res.send(error)
                     return
                 }
@@ -321,11 +317,17 @@ const getMB = async (uri: any) => {
             url: uri.item,
             method: "HEAD"
         }, function (err, response, body) {
-
-            const bytes: any = (response.headers['content-length'])
-            const MB: any = bytes / (1000 * 1000)
-            console.log("MB: " + MB);
-            resolve(MB)
+            if(err)
+            {
+                resolve(6)
+            }
+            if(response && response.headers)
+            {
+                const bytes: any = (response.headers['content-length'])
+                const MB: any = bytes / (1000 * 1000)
+                console.log("MB: " + MB);
+                resolve(MB)
+            }
 
 
         });
@@ -345,7 +347,7 @@ const getMyUri = (metaData: any) => {
 //function to upload image to AWS
 const uploadImage = async (params: any, metaData: any, res: any) => {
     return await new Promise(async (resolve: any, reject: any) => {
-
+        
         try {
             if (!params || !res) {
                 throw new Error(`{
@@ -354,17 +356,29 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                 }`)
             }
 
-            const searchParams = {
-                Bucket: bucket_name || ""
-            }
-
             // let toUpload: any = params.params
             let toUpload: any = params.params ? params.params : params
 
-            try {
+            const searchParams = {
+                Bucket: bucket_name || "",
+                Key: toUpload.Key,
+                ObjectAttributes:["ObjectSize",]
+                
+            }
 
+            try {
+                
                 //checking inside the bucket to see if we don't have duplicates
-                s3.listObjects(searchParams, (err, data) => {
+
+                s3.getObjectAttributes(searchParams,(err,data)=>{
+                    if(data)
+                    {
+                        resolve(toUpload.Body)    
+                    }
+                    
+                })
+
+                /*s3.listObjects(searchParams, (err, data) => {
                     try {
                         if (err) {
                             throw new Error(`${err}`)
@@ -372,25 +386,24 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                         if (data.Contents) {
                             for (let i = 0; i < data.Contents.length; i++) {
                                 if ((data.Contents)[i].Key === toUpload.Key) {
-                                    const message = `object with key ${toUpload.Key} already exists in bucket`
-                                    throw new Error(`{
-                                    num: -2,
-                                    data: ${message}
-                                }`)
+                                //     const message = `object with key ${toUpload.Key} already exists in bucket`
+                                //     throw new Error(`{
+                                //     num: -2,
+                                //     data: ${message}
+                                // }`)                                
                                 }
 
                             }
 
                         }
-                    } catch (e) { 
+                    } catch (e) {
                         console.log(e);
                         throw new Error(`${e}`)
                     }
 
-                })
+                })*/
 
             } catch (error) {
-                console.log("moo?")
                 console.log(error)
                 throw new Error(`{
                     num: -3,
@@ -403,7 +416,7 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
 
             let typeBody = params.Body ? params.Body : params.params.Body
             try {
-                //22222222222222222222222
+
                 await retrieveFileData(typeBody)
                     .then(async (data: any) => {
                         if (!data) {
@@ -412,9 +425,9 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                                 data: "no data was received from axios in upload function"
                             }`)
                         }
-                        //22222222222222222222222
 
-                        //33333333333333333333333
+
+
                         //checks what the data is- if error or a valid file
 
                         /*const maybeError: any = checkData(data, res)
@@ -423,13 +436,14 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                             res.send(maybeError.message)
                             return
                         }
-                        //33333333333333333333333*/
+                        */
                         toUpload["Body"] = data.data
                         try {
 
 
                             let newImage = s3.upload(toUpload, async (err: any, data: any) => {
                                 if (err) {
+                                    
                                     throw new Error(`{
                                         num: -4,
                                         data: ${err}
@@ -437,7 +451,7 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                                 }
 
 
-                            }).promise().then(n => n.Location);
+                            }).promise().then((n) => n.Location);
 
                             resolve(newImage)
                         } catch (error) {
@@ -490,20 +504,28 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
                 Bucket: bucket_name || ""
             }
 
-
-
-
-
             let toUpload: any = params.params ? params.params : params
 
             try {
 
+                const searchParams = {
+                    Bucket: bucket_name || "",
+                    Key: toUpload.Key,
+                    ObjectAttributes:["ObjectSize",]
+                    
+                }
+
+                s3.getObjectAttributes(searchParams,(err,data)=>{
+                    if(data)
+                    {
+                        resolve(toUpload.Body)    
+                    }
+                    
+                })
 
                 //checking inside the bucket to see if we don't have duplicates
-                s3.listObjects(searchParams, (err, data) => {
+                /*s3.listObjects(searchParams, (err, data) => {
                     try {
-
-
                         if (err) {
                             throw new Error(`${err}`)
                         }
@@ -522,7 +544,8 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
                     } catch (error) {
                         throw new Error(`${error}`)
                     }
-                })
+                })*/
+
             } catch (error) {
                 throw new Error(`${error}`)
             }
@@ -531,9 +554,6 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
             let typeBody = params.Body ? params.Body : params.params.Body
 
             try {
-
-
-
                 await retrieveFileData(typeBody)
                     .then(async (data: any) => {
                         if (!data) {
@@ -666,18 +686,16 @@ const retrieveFileData = async (mediaURI: any) => {
             }`)
         }
 
-
-
         try {
-
+            console.log("url is: "+mediaURI)
             const _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
                 .then((data) => data.data ? data.data : undefined)
-                .catch((err) => {
-                    throw new Error(`{
-                        num: -6,
-                        message: "problem with axios in retrieveFileData function inside axios promise is: " + err
-                    }`)
-                })
+                .catch((err) => {console.log("blah");return ""}
+                    // throw new Error(`{
+                    //     num: -6,
+                    //     message: "problem with axios in retrieveFileData function inside axios promise is: " + err
+                    // }`)
+                )
             if (_data) {
                 resolve({
                     num: 0,
@@ -853,7 +871,7 @@ const fileUpload = async (uri: string, res: any) => {
 
 
 //FOR TESTING PURPOSES ONLY!!!!!!
-export const deleteObjects = (req: any, res: any) => {
+/*export const deleteObjects = (req: any, res: any) => {
 
     const params = {
         Bucket: bucket_name || ""
@@ -873,7 +891,7 @@ export const deleteObjects = (req: any, res: any) => {
         }
     })
     res.send("done")
-}
+}*/
 
 
 

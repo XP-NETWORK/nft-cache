@@ -3,6 +3,9 @@ import chai, { expect } from 'chai'
 import server from '../src/index'
 import chaiHttp from 'chai-http'
 import console from 'console'
+import * as exampleNFTs from '../exampleNFTs.json'
+import axios from 'axios'
+import { send } from 'process'
 
 const should = chai.should()
 
@@ -118,95 +121,154 @@ describe("GET getByData", () => {
 })
 */
 
-describe("POST add NFT",()=>{
+describe("POST add NFT", () => {
+    /*
+        it("test 1 - missing parameter chainId when sending ", async () => {
     
-    it("test 1 - missing parameter chainId when sending ",async ()=>{
+            const obj = {
+    
+                "tokenId": "4567",
+                "owner": "you",
+                "collectionIdent": "someCollection",
+                "uri": "https://uriimage.com",
+                "contract": "0xsomeaddress",
+                "contractType": "ERC721",
+                "metaData": {
+                    "image": "ipfs://QmTNwCCf7sn8JY9tGmtcGW7nU269uYGAxiwPkLFMqeA2tB",
+                    "imageFormat": "png",
+                    "attributes": {
+                        "tail": "blue",
+                        "smile": "shimmering"
+                    }
+                },
+                "misc": {
+                    "name": "test 1",
+                    "symbol": "TEST"
+                }
+            }
+    
+            const result = await chai.request(server).post("/nft/add").send(obj)
+    
+            result.should.have.property("text").eq("chainId/tokenId/contract/metaData is missing")
+        })
+    
+    
+        it("test 2 - missing parameter image from metaData when sending ", async () => {
+    
+            const obj = {
+                "chainId": "1234",
+                "tokenId": "4567",
+                "owner": "you",
+                "collectionIdent": "someCollection",
+                "uri": "https://uriimage.com",
+                "contract": "0xsomeaddress",
+                "contractType": "ERC721",
+                "metaData": {
+                    //"image": "ipfs://QmTNwCCf7sn8JY9tGmtcGW7nU269uYGAxiwPkLFMqeA2tB",
+                    "imageFormat": "png",
+                    "attributes": {
+                        "tail": "blue",
+                        "smile": "shimmering"
+                    }
+                },
+                "misc": {
+                    "name": "test 1",
+                    "symbol": "TEST"
+                }
+            }
+    
+            const result = await chai.request(server).post("/nft/add").send(obj)
+    
+            result.should.have.property("text").eq("image/video uri is missing for params")
+        })
+    
+    
+        it("test 3 - sending same NFT/already exists in DB ", async () => {
+    
+            const obj = {
+                "chainId": "1234",
+                "tokenId": "4567",
+                "owner": "you",
+                "collectionIdent": "someCollection",
+                "uri": "https://uriimage.com",
+                "contract": "0xsomeaddress",
+                "contractType": "ERC721",
+                "metaData": {
+                    "image": "ipfs://QmTNwCCf7sn8JY9tGmtcGW7nU269uYGAxiwPkLFMqeA2tB",
+                    "imageFormat": "png",
+                    "attributes": {
+                        "tail": "blue",
+                        "smile": "shimmering"
+                    }
+                },
+                "misc": {
+                    "name": "test 1",
+                    "symbol": "TEST"
+                }
+            }
+    
+            const result = await chai.request(server).post("/nft/add").send(obj)
+            console.log(result.text)
+            result.should.have.property("text")
+        })*/
 
-        const obj = {
+
+    it("test 4 - multiple entries to cache", async () => {
+
+        let okayArr: boolean[] = []
+
+        console.log("won't upload: ", (exampleNFTs.data)[4])
+
+        /*for await (const nft of exampleNFTs.data) {
+            console.log("current nft: ",nft)
+            // console.log("i = " + i)
+            //console.log("this is current the NFT data: ", (exampleNFTs.data)[i])
             
-            "tokenId": "4567",
-            "owner": "you",
-            "collectionIdent": "someCollection",
-            "uri": "https://uriimage.com",
-            "contract": "0xsomeaddress",
-            "contractType": "ERC721",
-            "metaData": {
-                "image": "ipfs://QmTNwCCf7sn8JY9tGmtcGW7nU269uYGAxiwPkLFMqeA2tB",
-                "imageFormat": "png",
-                "attributes": {
-                    "tail": "blue",
-                    "smile": "shimmering"
-                }
-            },
-            "misc": {
-                "name": "test 1",
-                "symbol": "TEST"
-            }
-        }
+            await axios.get(nft.uri)
+                .then(async (n) => {
+            
+                    const obj = {
+                        "chainId": nft.native.chainId,
+                        "tokenId": nft.native.tokenId,
+                        "owner": (nft).native.owner,
+                        "collectionIdent": (nft).collectionIdent,
+                        "uri": (nft).uri,
+                        "contract": (nft).native.contract,
+                        "contractType": (nft).native.contractType,
+                        "metaData": {
+                            "image": n.data.image,
+                            "imageFormat": "png",
+                        }
+                    }
 
-        const result = await chai.request(server).post("/nft/add").send(obj)
+                    const res = await chai.request(server).post("/nft/add").send(obj)
 
-        result.should.have.property("text").eq("chainId/tokenId/contract/metaData is missing")
+                    console.log(res.status)
+                    console.log(res.body)
+
+                    if (res && res.body) {
+                        okayArr.push(true)
+                    }
+                    /*if (res.body === {}) {
+                        console.log("this is the problem: 1 ", (exampleNFTs.data)[i])
+                        process.exit(0)
+                    }*/
+
+                /*})
+                .catch((err) => {
+                    console.log("problem with axios")
+                    
+                })
+
+
+
+        }*/
+
+        console.log("this is okayArr: ", okayArr)
+
+        okayArr.should.have.length(10)
+
     })
 
-
-    it("test 2 - missing parameter image from metaData when sending ",async ()=>{
-
-        const obj = {
-            "chainId":"1234",
-            "tokenId": "4567",
-            "owner": "you",
-            "collectionIdent": "someCollection",
-            "uri": "https://uriimage.com",
-            "contract": "0xsomeaddress",
-            "contractType": "ERC721",
-            "metaData": {
-                //"image": "ipfs://QmTNwCCf7sn8JY9tGmtcGW7nU269uYGAxiwPkLFMqeA2tB",
-                "imageFormat": "png",
-                "attributes": {
-                    "tail": "blue",
-                    "smile": "shimmering"
-                }
-            },
-            "misc": {
-                "name": "test 1",
-                "symbol": "TEST"
-            }
-        }
-
-        const result = await chai.request(server).post("/nft/add").send(obj)
-
-        result.should.have.property("text").eq("image/video uri is missing for params")
-    })
-
-    
-    it("test 3 - missing parameter image from metaData when sending ",async ()=>{
-
-        const obj = {
-            "chainId":"1234",
-            "tokenId": "4567",
-            "owner": "you",
-            "collectionIdent": "someCollection",
-            "uri": "https://uriimage.com",
-            "contract": "0xsomeaddress",
-            "contractType": "ERC721",
-            "metaData": {
-                "image": "ipfs://QmTNwCCf7sn8JY9tGmtcGW7nU269uYGAxiwPkLFMqeA2tB",
-                "imageFormat": "png",
-                "attributes": {
-                    "tail": "blue",
-                    "smile": "shimmering"
-                }
-            },
-            "misc": {
-                "name": "test 1",
-                "symbol": "TEST"
-            }
-        }
-
-        const result = await chai.request(server).post("/nft/add").send(obj)
-        console.log(result.text)
-        result.should.have.property("text")
-    })
 
 })
