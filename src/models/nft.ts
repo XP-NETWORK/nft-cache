@@ -42,7 +42,7 @@ schema.statics.addToCache = async function (obj: any, res: any, mediasAdded: num
 
         let NFT = await this.findOne({ contract: obj.contract, tokenId: obj.tokenId })
         if (NFT !== null) {
-            sendNFTexistsMessage(NFT._id)
+            //sendNFTexistsMessage(NFT._id)
             res.send(`such NFT already exists in cache with id: ${NFT._id}`)
             return
         } else {
@@ -71,7 +71,7 @@ schema.statics.addToCache = async function (obj: any, res: any, mediasAdded: num
 schema.statics.addToCacheFile = async function (obj: any, res: any) {
     let NFT = await this.findOne({ uri: obj.uri })
     if (NFT !== null) {
-        sendNFTexistsMessage(NFT._id)
+        //sendNFTexistsMessage(NFT._id)
         res.send(obj.metaData)
         return
     } else {

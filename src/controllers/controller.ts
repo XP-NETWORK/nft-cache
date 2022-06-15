@@ -6,9 +6,13 @@ import axios from 'axios';
 import fs from 'fs'
 import { sendInitMessage, sendNewNFTCachedMessage, sendNFTexistsMessage, sendUploadedMessage } from '../helpers/telegram';
 import request from 'request'
-import e from 'connect-timeout';
+//import e from 'connect-timeout';
 
-
+const myAxios = (baseurl:string)=> axios.create({
+    baseURL:baseurl,
+    timeout:60000,
+    responseType:"arraybuffer"
+})
 
 //get the metadata back by the url (retrieving ONLY the metadata)
 export const getByURI = async (req: any, res: any) => {
@@ -67,7 +71,7 @@ export const addNFT = async (req: any, res: any) => {
     //     //process.exit(1); // mandatory (as per the Node.js docs)
     // });
     try {
-        sendInitMessage()
+        //sendInitMessage()
         const { chainId, tokenId, owner, uri, contract, contractType, metaData, misc } = req.body
         if (!chainId || !tokenId || !contract || !metaData) {
             console.log("chainId/tokenId/contract/metaData is missing")
@@ -378,7 +382,7 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                     resolve(toUpload.Body)
                 }
 
-            }).promise().then(n => n)
+            }).promise().then(n => n).catch(()=>{})
 
             /*s3.listObjects(searchParams, (err, data) => {
                 try {
@@ -464,7 +468,7 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
                             resolve(toUpload.Body)
                         }
 
-                    })
+                    }).promise().then(n => n).catch(()=>{})
 
      
 
@@ -581,8 +585,8 @@ const retrieveFileData = async (mediaURI: any) => {
                 return
             }
 
-            
-                let _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
+                let _data = await myAxios(mediaURI).get("")
+                //let _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
                     .then((data) => data.data ? data.data : undefined)
                     .catch(() => { })
 
@@ -684,7 +688,7 @@ const fileUpload = async (uri: string, res: any) => {
                             resolve(params.Body)
                         }
 
-                    })
+                    }).promise().then(n => n).catch(()=>{})
 
                     /*s3.listObjects(searchParams, (err, data) => {
                         try {
