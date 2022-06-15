@@ -6,6 +6,7 @@ import axios from 'axios';
 import fs from 'fs'
 import { sendInitMessage, sendNewNFTCachedMessage, sendNFTexistsMessage, sendUploadedMessage } from '../helpers/telegram';
 import request from 'request'
+import e from 'connect-timeout';
 
 
 
@@ -326,13 +327,13 @@ const getMB = async (uri: any) => {
                     let MB: any = bytes / (1000 * 1000)
                     console.log("MB: " + MB);
                     resolve(MB)
+                } else {
+                    reject(undefined)
                 }
-
 
             });
         })
-    } catch (e) {
-        return
+    } catch () {
     }
 }
 
@@ -403,9 +404,7 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
                     })*/
 
                 } catch (error) {
-                    console.log(error)
-
-                    return
+                    reject(undefined)
                 }
 
                 //actually retreiving file data (image OR video)
@@ -431,23 +430,27 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
 
                                 resolve(newImage)
                             } catch (error) {
-                                return
+                                reject(undefined)
+
                             }
 
                         })
                         .catch((error) => {
-                            return
+                            reject(undefined)
+
 
                         })
 
 
                 } catch (error) {
-                    return
+                    reject(undefined)
+
                 }
 
 
             } catch (error) {
-                return
+                reject(undefined)
+
 
             }
 
@@ -465,7 +468,8 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
 
             try {
                 if (!params || !res) {
-                    return
+                    reject(undefined)
+
                 }
 
                 let toUpload: any = params.params ? params.params : params
@@ -612,26 +616,26 @@ const retrieveFileData = async (mediaURI: any) => {
     try {
         return await new Promise(async (resolve: any, reject: any) => {
             if (!mediaURI) {
-                return
+                reject(undefined)
+
             }
 
             try {
-                const _data = await new Promise((resolve, reject) => {
-                    let alex = axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
-                        .then((data) => data.data ? data.data : undefined)
-                        .catch((err) => { console.log("blah"); return "" })
-                    resolve(alex)
-                })
+                let _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
+                    .then((data) => data.data ? data.data : undefined)
+                    .catch(() => { })
+
 
                 if (_data) {
                     resolve({
                         num: 0,
                         data: _data
                     })
+                } else {
+                    reject(undefined)
                 }
             } catch (error) {
-                return
-                //reject(error)
+                reject(undefined)
             }
         })
     } catch (e) {
@@ -749,7 +753,7 @@ const fileUpload = async (uri: string, res: any) => {
                         }
                     })*/
                 } catch (error) {
-                    return
+                    reject(undefined)
                 }
                 //actually retreiving file data (image OR video)
 
@@ -777,24 +781,28 @@ const fileUpload = async (uri: string, res: any) => {
                                 }).promise().then(n => n.Location);
                                 resolve(uploaded)
                             } catch (e) {
-                                return
+                                reject(undefined)
+
                             }
                         })
                         .catch((error) => {
 
-                            return
+                            reject(undefined)
+
 
                         })
 
 
                 } catch (error) {
-                    return
+                    reject(undefined)
+
                 }
 
 
             } catch (error) {
 
-                return
+                reject(undefined)
+
             }
 
 
