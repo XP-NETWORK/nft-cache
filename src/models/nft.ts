@@ -43,7 +43,7 @@ schema.statics.addToCache = async function (obj: any, res: any, mediasAdded: num
         let NFT = await this.findOne({ contract: obj.contract, tokenId: obj.tokenId })
         if (NFT !== null) {
             //sendNFTexistsMessage(NFT._id)
-            res.send(`such NFT already exists in cache with id: ${NFT._id}`)
+            res.send(NFT.metaData)
             return
         } else {
             res.send(obj)
