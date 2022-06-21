@@ -386,9 +386,8 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
             resolve(toUpload.Body);
           }
         })
-        .promise();
-      //.then((n) => n)
-      // .catch(() => {});
+        .promise()
+        .catch(() => {});
 
       /*s3.listObjects(searchParams, (err, data) => {
                 try {
