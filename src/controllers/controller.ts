@@ -7,7 +7,7 @@ import {
   paramsForFile,
   dataToNFTObjFile,
 } from "../helpers/helpers";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import fs from "fs";
 import {
   sendInitMessage,
@@ -17,6 +17,9 @@ import {
 } from "../helpers/telegram";
 import request from "request";
 //import e from 'connect-timeout';
+import stream, { PassThrough, Readable } from "stream";
+
+import { S3 } from "aws-sdk";
 
 const myAxios = (baseurl: string) =>
   axios.create({
@@ -95,7 +98,6 @@ export const addNFT = async (req: any, res: any) => {
       metaData,
       misc,
     } = req.body;
-    console.log(req.body);
 
     if (!chainId || !tokenId /*|| !contract*/ || !metaData) {
       console.log("chainId/tokenId/contract/metaData is missing");
@@ -279,7 +281,7 @@ export const addNFT = async (req: any, res: any) => {
           if (MB >= 5 || isNaN(MB)) {
             //does nothing because size of file is bigger than 5 MB
           } else {
-            await uploadVideo(videoParams, metaData, res)
+            await uploadImage(videoParams, metaData, res)
               .then(async (videoURI) => {
                 newMetaData.video = videoURI;
                 //obj.metaData = newMetaData
@@ -377,14 +379,16 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
 
       //checking inside the bucket to see if we don't have duplicates
 
-      s3.getObjectAttributes(searchParams, (err, data) => {
-        if (data) {
-          resolve(toUpload.Body);
-        }
-      })
-        .promise()
-        .then((n) => n)
-        .catch(() => {});
+      await s3
+        .getObjectAttributes(searchParams, (err, data) => {
+          if (data) {
+            console.log("same image ");
+            resolve(toUpload.Body);
+          }
+        })
+        .promise();
+      //.then((n) => n)
+      // .catch(() => {});
 
       /*s3.listObjects(searchParams, (err, data) => {
                 try {
@@ -414,8 +418,16 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
       //actually retreiving file data (image OR video)
 
       let typeBody = params.Body ? params.Body : params.params.Body;
+      try {
+        console.log("start stream ", toUpload.Key);
+        const newImage = await streamFileToS3(typeBody, toUpload.Key);
+        resolve(newImage);
+      } catch (e: any) {
+        console.log(e?.data?.statusMessage, "streamFileToS3");
+        reject(e);
+      }
 
-      await retrieveFileData(typeBody)
+      /* await retrieveFileData(typeBody)
         .then(async (data: any) => {
           if (!data) {
             return;
@@ -434,7 +446,7 @@ const uploadImage = async (params: any, metaData: any, res: any) => {
         })
         .catch((error) => {
           return;
-        });
+        });*/
     });
   } catch (e) {
     return;
@@ -741,3 +753,80 @@ const fileUpload = async (uri: string, res: any) => {
     })
     res.send("done")
 }*/
+
+const uploadFromStream = (
+  fileResponse: AxiosResponse,
+  fileName: string,
+  bucket: string
+): {
+  passThrough: PassThrough;
+  promise: Promise<S3.ManagedUpload.SendData>;
+} => {
+  const passThrough = new PassThrough();
+
+  const promise = s3
+    .upload({
+      Bucket: bucket,
+      Key: fileName,
+      ContentType: fileResponse.headers["content-type"],
+      ContentLength: Number(fileResponse.headers["content-length"]),
+      Body: passThrough,
+    })
+    .promise();
+  return { passThrough, promise };
+};
+
+const streamFileToS3 = async (url: string, Key: string) => {
+  const responseStream = await axios
+    .get(url, {
+      responseType: "stream",
+    })
+    .catch((e) => {
+      throw e;
+    });
+
+  const { passThrough, promise } = uploadFromStream(
+    responseStream,
+    Key,
+    bucket_name || ""
+  );
+
+  responseStream.data.pipe(passThrough);
+
+  return promise
+    .then((result) => {
+      console.log(result);
+      return result.Location;
+    })
+    .catch((e) => {
+      throw e;
+    });
+};
+
+export const testRoute = async (req: any, res: any) => {
+  const responseStream = await axios.get(
+    "https://gateway.pinata.cloud/ipfs/Qme9SvyZYWjA8izEWiA5CacDcsE48unAiVaHJAeSn3AdHA/15.jpeg",
+    {
+      responseType: "stream",
+    }
+  );
+
+  const { passThrough, promise } = uploadFromStream(
+    responseStream,
+    "some-key-ittor11",
+    bucket_name || "test-bucket"
+  );
+
+  responseStream.data.pipe(passThrough);
+
+  promise
+    .then((result) => {
+      console.log(result);
+      return result.Location;
+    })
+    .catch((e) => {
+      throw e;
+    });
+
+  res.end();
+};
