@@ -198,36 +198,35 @@ export const addNFT = async (req: any, res: any) => {
 
           if (MB >= 5 || isNaN(MB)) {
             //console.log("still going in")
-            await NFT.addToCache(obj, res, 1);
+            await NFT.addToCache(obj, 1);
+            res.send(
+              `without uploading ${params?.params?.Key || params?.Key} to AWS`
+            );
             return;
           }
           try {
-            await uploadImage(params, metaData, res)
-              .then(async (imageURI: any) => {
-                if (imageURI.num < 0) {
-                  res.send(`err num: ${imageURI.num}. error: ` + imageURI.data);
-                  return;
-                }
-
-                newMetaData.image = imageURI;
-                obj.metaData = newMetaData;
-                await NFT.addToCache(obj, res, 1);
-              })
-              .catch((err) => {
-                console.log("it's in the catch!!!!");
-                res.send("error in image uploading is: " + err);
+            res.send(`uploading ${params?.params?.Key || params?.Key} to AWS`);
+            uploadImage(params, metaData).then(async (imageURI: any) => {
+              if (!imageURI || imageURI.num < 0) {
                 return;
-              });
+              }
+
+              newMetaData.image = imageURI;
+              obj.metaData = newMetaData;
+              await NFT.addToCache(obj, 1);
+            });
           } catch (error) {
-            res.send(error);
+            console.log(error, "when image");
             return;
           }
+
           return;
         } catch (error) {
           res.send(error);
           return;
         }
       }
+
       //when video
       if (!formattedImageURI && formattedVideoURI) {
         try {
@@ -236,66 +235,59 @@ export const addNFT = async (req: any, res: any) => {
           if (MB >= 5 || isNaN(MB)) {
             newMetaData.video /*animation_url*/ = formattedVideoURI.item;
             obj.metaData = newMetaData;
-            await NFT.addToCache(obj, res, 1);
+            await NFT.addToCache(obj, 1);
+            res.send(
+              `without uploading ${params?.params?.Key || params?.Key} to AWS`
+            );
             return;
           }
-          await uploadVideo(params, metaData, res)
-            .then(async (videoURI) => {
-              newMetaData.video /*animation_url*/ = videoURI;
-              obj.metaData = newMetaData;
-              await NFT.addToCache(obj, res, 1);
-              return;
-            })
-            .catch((err) => {
-              res.send("error in video uploading is: " + err);
-            });
+          res.send(`uploading ${params?.params?.Key || params?.Key} to AWS`);
+          uploadImage(params, metaData).then(async (videoURI) => {
+            newMetaData.video /*animation_url*/ = videoURI;
+            obj.metaData = newMetaData;
+            await NFT.addToCache(obj, 1);
+          });
         } catch (error) {
-          res.send(error);
+          console.log(error, "when video");
+          return;
         }
       }
 
       if (formattedImageURI && formattedVideoURI) {
         const { imageParams, videoParams } = params;
         try {
-          let MB: any = await getMB(formattedImageURI);
+          res.send(`uploading ${params?.params?.Key || params?.Key} to AWS`);
 
-          if (MB >= 5 || isNaN(MB)) {
-            //does nothing because file is bigger than 5 MB
-          } else {
-            //const { imageParams, videoParams } = params
-            await uploadImage(imageParams, metaData, res)
-              .then(async (imageURI) => {
-                newMetaData.image = imageURI;
-                //obj.metaData = newMetaData
-              })
-              .catch((err) => {
-                res.send("error in image uploading is: " + err);
-                return;
-              });
-            MB = 0;
-          }
-          //checking size of file through request and url
-
-          MB = await getMB(formattedVideoURI);
-
-          if (MB >= 5 || isNaN(MB)) {
-            //does nothing because size of file is bigger than 5 MB
-          } else {
-            await uploadImage(videoParams, metaData, res)
-              .then(async (videoURI) => {
-                newMetaData.video = videoURI;
-                //obj.metaData = newMetaData
-              })
-
-              .catch((err) => {
-                console.log(err);
-                res.send("error in image and video uploading is: " + err);
-              });
-          }
-          await NFT.addToCache(obj, res, 1);
-
-          //obj.metaData = newMetaData
-          return;
+          await Promise.all([
+            (async () => {
+              let MB: any = await getMB(formattedImageURI);
+              if (MB && MB < 5) {
+                uploadImage(imageParams, metaData)
+                  .then(async (imageURI) => {
+                    newMetaData.image = imageURI;
+                    //obj.metaData = newMetaData
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                  });
+              }
+            })(),
+            (async () => {
+              let MB: any = await getMB(formattedVideoURI);
+              if (MB && MB < 5) {
+                uploadImage(videoParams, metaData)
+                  .then(async (videoURI) => {
+                    newMetaData.video = videoURI;
+                    //obj.metaData = newMetaData
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                  });
+              }
+            })(),
+          ]);
+          obj.metaData = newMetaData;
+          await NFT.addToCache(obj, 1);
         } catch (error) {
           console.log(error);
           res.send(error);
@@ -361,10 +353,10 @@ const getMyUri = (metaData: any) => {
 };
 
 //function to upload image to AWS
-const uploadImage = async (params: any, metaData: any, res: any) => {
+const uploadImage = async (params: any, metaData: any) => {
   try {
     return await new Promise(async (resolve: any, reject: any) => {
-      if (!params || !res) {
+      if (!params) {
         return;
       }
 

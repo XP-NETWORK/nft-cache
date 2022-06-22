@@ -25,6 +25,6 @@ export interface INFTModel extends Model<INFTDocument> {
     chainId: string,
     tokenId: string
   ): Promise<INFTDocument>;
-  addToCache(obj: any, res: any, mediasAdded: number): Promise<INFTDocument>;
+  addToCache(obj: any, mediasAdded: number): Promise<INFTDocument>;
   addToCacheFile(obj: any, res: any): Promise<INFTDocument>;
 }
