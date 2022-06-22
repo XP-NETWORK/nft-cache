@@ -74,8 +74,9 @@ export const getByData = async (req: any, res: any) => {
       res.status(200).send("no NFT with that data was found");
       return;
     }
-  } catch (error) {
-    res.status(400).send("problem with getNftFromToken, error is: ", error);
+  } catch (error: any) {
+    console.log(error);
+    res.status(400).send("problem with getNftFromToken, error is: ");
   }
 };
 
@@ -204,6 +205,7 @@ export const addNFT = async (req: any, res: any) => {
             );
             return;
           }
+
           try {
             res.send(`uploading ${params?.params?.Key || params?.Key} to AWS`);
             uploadImage(params, metaData).then(async (imageURI: any) => {
@@ -786,7 +788,6 @@ const streamFileToS3 = async (url: string, Key: string) => {
 
   return promise
     .then((result) => {
-      console.log(result);
       return result.Location;
     })
     .catch((e) => {

@@ -1,15 +1,15 @@
-import request from 'supertest'
-import chai, { expect } from 'chai'
-import server from '../src/index'
-import chaiHttp from 'chai-http'
-import console from 'console'
-import * as exampleNFTs from '../exampleNFTs.json'
-import axios from 'axios'
-import { send } from 'process'
+import request from "supertest";
+import chai, { expect } from "chai";
+//import server from '../src/index'
+import chaiHttp from "chai-http";
+import console from "console";
+import * as exampleNFTs from "../exampleNFTs.json";
+import axios from "axios";
+import { send } from "process";
 
-const should = chai.should()
+const should = chai.should();
 
-chai.use(chaiHttp)
+chai.use(chaiHttp);
 
 //tests for GET methods: getByURI and getByData
 /*
@@ -122,7 +122,7 @@ describe("GET getByData", () => {
 */
 
 describe("POST add NFT", () => {
-    /*
+  /*
         it("test 1 - missing parameter chainId when sending ", async () => {
     
             const obj = {
@@ -212,63 +212,52 @@ describe("POST add NFT", () => {
             result.should.have.property("text")
         })*/
 
+  it("test 4 - multiple entries to cache", async () => {
+    let okayArr: boolean[] = [];
 
-    it("test 4 - multiple entries to cache", async () => {
+    // for await (const nft of exampleNFTs.data) {
+    exampleNFTs.data.forEach(async (nft: any) => {
+      // console.log("current nft: ", nft)
+      // console.log("i = " + i)
+      //console.log("this is current the NFT data: ", (exampleNFTs.data)[i])
 
-        let okayArr: boolean[] = []
+      await axios
+        .get(nft.uri)
+        .then(async (n) => {
+          const obj = {
+            chainId: nft.native.chainId,
+            tokenId: nft.native.tokenId,
+            owner: nft.native.owner,
+            collectionIdent: nft.collectionIdent,
+            uri: nft.uri,
+            contract: nft.native.contract,
+            contractType: nft.native.contractType,
+            metaData: {
+              image: n.data.image,
+              imageFormat: "png",
+            },
+          };
 
-        // for await (const nft of exampleNFTs.data) {
-        exampleNFTs.data.forEach(async (nft: any) => {
+          //const res = await chai.request(server).post("/nft/add").send(obj)
 
-            // console.log("current nft: ", nft)
-            // console.log("i = " + i)
-            //console.log("this is current the NFT data: ", (exampleNFTs.data)[i])
+          //console.log(res.status)
+          //console.log(res.body)
 
-            await axios.get(nft.uri)
-                .then(async (n) => {
-
-                    const obj = {
-                        "chainId": nft.native.chainId,
-                        "tokenId": nft.native.tokenId,
-                        "owner": (nft).native.owner,
-                        "collectionIdent": (nft).collectionIdent,
-                        "uri": (nft).uri,
-                        "contract": (nft).native.contract,
-                        "contractType": (nft).native.contractType,
-                        "metaData": {
-                            "image": n.data.image,
-                            "imageFormat": "png",
-                        }
-                    }
-
-                    const res = await chai.request(server).post("/nft/add").send(obj)
-
-                    console.log(res.status)
-                    console.log(res.body)
-
-                    if (res && res.body) {
-                        okayArr.push(true)
-                    }
-                    /*if (res.body === {}) {
+          //if (res && res.body) {
+          // okayArr.push(true)
+          // }
+          /*if (res.body === {}) {
                         console.log("this is the problem: 1 ", (exampleNFTs.data)[i])
                         process.exit(0)
                     }*/
-
-                })
-                .catch((err) => {
-                    console.log("problem with axios"+err)
-
-                })
-
-
-
         })
+        .catch((err) => {
+          console.log("problem with axios" + err);
+        });
+    });
 
-        console.log("this is okayArr: ", okayArr)
+    console.log("this is okayArr: ", okayArr);
 
-        okayArr.should.have.length(10)
-
-    })
-
-
-})
+    okayArr.should.have.length(10);
+  });
+});
