@@ -217,15 +217,17 @@ export const addNFT = async (req: any, res: any) => {
 
           try {
             res.send(`uploading ${params?.params?.Key || params?.Key} to AWS`);
-            uploadImage(params, metaData).then(async (imageURI: any) => {
-              if (!imageURI || imageURI.num < 0) {
-                return;
-              }
+            uploadImage(params, metaData)
+              .then(async (imageURI: any) => {
+                if (!imageURI || imageURI.num < 0) {
+                  return;
+                }
 
-              newMetaData.image = imageURI;
-              obj.metaData = newMetaData;
-              NFT.addToCache(obj, 1);
-            });
+                newMetaData.image = imageURI;
+                obj.metaData = newMetaData;
+                NFT.addToCache(obj, 1);
+              })
+              .catch(() => {});
           } catch (error) {
             console.log(error, "when image");
             return;
@@ -256,11 +258,13 @@ export const addNFT = async (req: any, res: any) => {
           }
 
           res.send(`uploading ${params?.params?.Key || params?.Key} to AWS`);
-          uploadImage(params, metaData).then(async (videoURI) => {
-            newMetaData.video /*animation_url*/ = videoURI;
-            obj.metaData = newMetaData;
-            NFT.addToCache(obj, 1);
-          });
+          uploadImage(params, metaData)
+            .then(async (videoURI) => {
+              newMetaData.video /*animation_url*/ = videoURI;
+              obj.metaData = newMetaData;
+              NFT.addToCache(obj, 1);
+            })
+            .catch(() => {});
           return;
         } catch (error) {
           console.log(error, "when video");
@@ -402,8 +406,8 @@ const uploadImage = async (params: any, metaData: any) => {
         const newImage = await streamFileToS3(typeBody, toUpload.Key);
         resolve(newImage);
       } catch (e: any) {
-        console.log(e, "streamFileToS3");
-        reject(e);
+        console.log(e.code, "streamFileToS3");
+        reject(e.code);
       }
 
       /* await retrieveFileData(typeBody)
