@@ -18,6 +18,7 @@ import {
 import request from "request";
 //import e from 'connect-timeout';
 import stream, { PassThrough, Readable } from "stream";
+import { Request } from "express";
 
 import { S3 } from "aws-sdk";
 
@@ -29,8 +30,8 @@ const myAxios = (baseurl: string) =>
   });
 
 //get the metadata back by the url (retrieving ONLY the metadata)
-export const getByURI = async (req: any, res: any) => {
-  const uri = req.query?.uri;
+export const getByURI = async (req: Request, res: any) => {
+  const uri = req?.query?.uri as string;
 
   if (!uri) {
     res.status(401).send("no url given");
@@ -53,9 +54,10 @@ export const getByURI = async (req: any, res: any) => {
 
 //getting the metadata by chain id, smart contract adderss and token id (retrieves ONLY the metadata)
 //ALL THREE ARE REQUIRED
-export const getByData = async (req: any, res: any) => {
+export const getByData = async (req: Request, res: any) => {
   const { chainId, contract = "", tokenId } = req.query;
 
+  const tm = Date.now();
   if (!chainId /*|| !contract*/ || !tokenId) {
     res
       .status(400)
@@ -65,7 +67,11 @@ export const getByData = async (req: any, res: any) => {
     return;
   }
   try {
-    const result: INFT = await NFT.getByData(contract, chainId, tokenId);
+    const result: INFT = await NFT.getByData(
+      contract as string,
+      chainId as string,
+      tokenId as string
+    );
 
     if (result) {
       res.status(200).send(result.metaData);
@@ -199,7 +205,10 @@ export const addNFT = async (req: any, res: any) => {
 
           if (MB >= 5 || isNaN(MB)) {
             //console.log("still going in")
-            await NFT.addToCache(obj, 1);
+            try {
+              NFT.addToCache(obj, 1);
+            } catch (e) {}
+
             res.send(
               `without uploading ${params?.params?.Key || params?.Key} to AWS`
             );
@@ -215,7 +224,7 @@ export const addNFT = async (req: any, res: any) => {
 
               newMetaData.image = imageURI;
               obj.metaData = newMetaData;
-              await NFT.addToCache(obj, 1);
+              NFT.addToCache(obj, 1);
             });
           } catch (error) {
             console.log(error, "when image");
@@ -237,18 +246,22 @@ export const addNFT = async (req: any, res: any) => {
           if (MB >= 5 || isNaN(MB)) {
             newMetaData.video /*animation_url*/ = formattedVideoURI.item;
             obj.metaData = newMetaData;
-            await NFT.addToCache(obj, 1);
+            try {
+              NFT.addToCache(obj, 1);
+            } catch (e) {}
             res.send(
               `without uploading ${params?.params?.Key || params?.Key} to AWS`
             );
             return;
           }
+
           res.send(`uploading ${params?.params?.Key || params?.Key} to AWS`);
           uploadImage(params, metaData).then(async (videoURI) => {
             newMetaData.video /*animation_url*/ = videoURI;
             obj.metaData = newMetaData;
-            await NFT.addToCache(obj, 1);
+            NFT.addToCache(obj, 1);
           });
+          return;
         } catch (error) {
           console.log(error, "when video");
           return;
@@ -357,7 +370,7 @@ const getMyUri = (metaData: any) => {
 //function to upload image to AWS
 const uploadImage = async (params: any, metaData: any) => {
   try {
-    return await new Promise(async (resolve: any, reject: any) => {
+    return new Promise(async (resolve: any, reject: any) => {
       if (!params) {
         return;
       }
@@ -383,40 +396,13 @@ const uploadImage = async (params: any, metaData: any) => {
         .promise()
         .catch(() => {});
 
-      /*s3.listObjects(searchParams, (err, data) => {
-                try {
-                    if (err) {
-                        throw new Error(`${err}`)
-                    }
-                    if (data.Contents) {
-                        for (let i = 0; i < data.Contents.length; i++) {
-                            if ((data.Contents)[i].Key === toUpload.Key) {
-                            //     const message = `object with key ${toUpload.Key} already exists in bucket`
-                            //     throw new Error(`{
-                            //     num: -2,
-                            //     data: ${message}
-                            // }`)                                
-                            }
- 
-                        }
- 
-                    }
-                } catch (e) {
-                    console.log(e);
-                    throw new Error(`${e}`)
-                }
- 
-            })*/
-
-      //actually retreiving file data (image OR video)
-
       let typeBody = params.Body ? params.Body : params.params.Body;
       try {
         console.log("start stream ", toUpload.Key);
         const newImage = await streamFileToS3(typeBody, toUpload.Key);
         resolve(newImage);
       } catch (e: any) {
-        console.log(e?.data?.statusMessage, "streamFileToS3");
+        console.log(e, "streamFileToS3");
         reject(e);
       }
 
