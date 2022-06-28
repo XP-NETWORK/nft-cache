@@ -7,7 +7,7 @@ import {
   paramsForFile,
   dataToNFTObjFile,
 } from "../helpers/helpers";
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 import fs from "fs";
 import {
   sendInitMessage,
@@ -20,7 +20,12 @@ import request from "request";
 import stream, { PassThrough, Readable } from "stream";
 import { Request } from "express";
 
+import BigNumber from "bignumber.js";
+
 import { S3 } from "aws-sdk";
+import { resolve } from "path/posix";
+
+const currentyFetching: string[] = [];
 
 const myAxios = (baseurl: string) =>
   axios.create({
@@ -199,7 +204,8 @@ export const addNFT = async (req: any, res: any) => {
       if (formattedImageURI && !formattedVideoURI) {
         //console.log(formattedImageURI)
         try {
-          let MB: any = await getMB(formattedImageURI);
+          let MB = await getSize(formattedImageURI);
+          if (!MB) return res.send(`timeout on fetching ${formattedImageURI}`);
 
           console.log("my MB: ", MB);
 
@@ -793,7 +799,7 @@ const streamFileToS3 = async (url: string, Key: string) => {
 };
 
 export const testRoute = async (req: any, res: any) => {
-  const params = {
+  /*const params = {
     Bucket: bucket_name || "",
     Prefix: "2-",
   };
@@ -815,9 +821,44 @@ export const testRoute = async (req: any, res: any) => {
         }
       }
     }
-  });
+  });*/
+
+  const n = 5000000;
+
+  console.log(new BigNumber(n.toString()).shiftedBy(-6).toNumber());
 
   res.end();
 };
 //2--ORC-ef544d-0159-video
 //2--ORC-ef544d-0159-image
+
+const getSize = (url: string): Promise<number | undefined> =>
+  new Promise(async (resolve, reject) => {
+    const responseStream = await axios
+      .get(url, {
+        responseType: "stream",
+        timeout: 8000,
+      })
+      .catch((e: AxiosError) => {
+        if (e.code === "ECONNABORTED") {
+          console.log("timeout");
+          return reject(undefined);
+        }
+      });
+
+    let size = 0;
+
+    responseStream?.data
+      .on("data", (chunk: ArrayBuffer) => {
+        size += Buffer.byteLength(chunk);
+        if (size >= 5000000) {
+          responseStream.data.destroy();
+        }
+      })
+      .on("end", () =>
+        resolve(new BigNumber(size.toString()).shiftedBy(-6).toNumber())
+      )
+      .on("close", (err: any) =>
+        resolve(new BigNumber(size.toString()).shiftedBy(-6).toNumber())
+      );
+  });
