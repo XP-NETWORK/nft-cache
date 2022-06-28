@@ -217,6 +217,7 @@ export const addNFT = async (req: any, res: any) => {
 
           try {
             res.send(`uploading ${params?.params?.Key || params?.Key} to AWS`);
+
             uploadImage(params, metaData)
               .then(async (imageURI: any) => {
                 if (!imageURI || imageURI.num < 0) {
@@ -273,7 +274,11 @@ export const addNFT = async (req: any, res: any) => {
       }
 
       if (formattedImageURI && formattedVideoURI) {
+        console.log("both");
         const { imageParams, videoParams } = params;
+        console.log(imageParams, videoParams);
+        console.log(newMetaData);
+        console.log(obj);
         try {
           res.send(`uploading ${params?.params?.Key || params?.Key} to AWS`);
 
@@ -306,7 +311,8 @@ export const addNFT = async (req: any, res: any) => {
             })(),
           ]);
           obj.metaData = newMetaData;
-          await NFT.addToCache(obj, 1);
+          NFT.addToCache(obj, 1);
+          return;
         } catch (error) {
           console.log(error);
           res.send(error);
@@ -343,6 +349,7 @@ const getMB = async (uri: any) => {
         {
           url: uri.item,
           method: "HEAD",
+          timeout: 8000,
         },
         function (err, response, body) {
           if (err) {
@@ -786,29 +793,31 @@ const streamFileToS3 = async (url: string, Key: string) => {
 };
 
 export const testRoute = async (req: any, res: any) => {
-  const responseStream = await axios.get(
-    "https://gateway.pinata.cloud/ipfs/Qme9SvyZYWjA8izEWiA5CacDcsE48unAiVaHJAeSn3AdHA/15.jpeg",
-    {
-      responseType: "stream",
+  const params = {
+    Bucket: bucket_name || "",
+    Prefix: "2-",
+  };
+  s3.listObjects(params, (err, data) => {
+    var start = new Date();
+    start.setUTCHours(0, 0, 0, 0);
+    if (data && data.Contents?.length) {
+      for (let i = 0; i < data.Contents?.length; i++) {
+        if (data.Contents[i].Key?.includes("ORC")) {
+          s3.deleteObject(
+            {
+              Bucket: bucket_name || "",
+              Key: data.Contents[i].Key!,
+            },
+            (err, data) => {
+              console.log(`data: ${i} ` + data);
+            }
+          );
+        }
+      }
     }
-  );
-
-  const { passThrough, promise } = uploadFromStream(
-    responseStream,
-    "some-key-ittor11",
-    bucket_name || "test-bucket"
-  );
-
-  responseStream.data.pipe(passThrough);
-
-  promise
-    .then((result) => {
-      console.log(result);
-      return result.Location;
-    })
-    .catch((e) => {
-      throw e;
-    });
+  });
 
   res.end();
 };
+//2--ORC-ef544d-0159-video
+//2--ORC-ef544d-0159-image
