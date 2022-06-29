@@ -47,8 +47,9 @@ schema.statics.getByData = async function (
 schema.statics.addToCache = async function (obj: any, mediasAdded: number) {
   try {
     let NFT = await this.findOne({
-      contract: obj.contract,
       tokenId: obj.tokenId,
+      chainId: obj.chainId,
+      ...(obj.contract && { contract: obj.contract }),
     });
     if (NFT !== null) {
       //sendNFTexistsMessage(NFT._id)

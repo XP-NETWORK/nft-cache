@@ -204,7 +204,7 @@ export const addNFT = async (req: any, res: any) => {
       if (formattedImageURI && !formattedVideoURI) {
         //console.log(formattedImageURI)
         try {
-          let MB = await getSize(formattedImageURI);
+          let MB = await getSize(formattedImageURI.item);
           if (!MB) return res.send(`timeout on fetching ${formattedImageURI}`);
 
           console.log("my MB: ", MB);
@@ -226,6 +226,7 @@ export const addNFT = async (req: any, res: any) => {
 
             uploadImage(params, metaData)
               .then(async (imageURI: any) => {
+                console.log(imageURI);
                 if (!imageURI || imageURI.num < 0) {
                   return;
                 }
@@ -791,6 +792,7 @@ const streamFileToS3 = async (url: string, Key: string) => {
 
   return promise
     .then((result) => {
+      console.log(`finish stream ${Key}`);
       return result.Location;
     })
     .catch((e) => {
@@ -823,23 +825,42 @@ export const testRoute = async (req: any, res: any) => {
     }
   });*/
 
-  const n = 5000000;
+  /*const params = {
+    Bucket: bucket_name || "",
+    Key: "6-0xe12B16FFBf7D79eb72016102F3e3Ae6fe03fCA56-10",
+  };
 
-  console.log(new BigNumber(n.toString()).shiftedBy(-6).toNumber());
+  s3.deleteObject(
+    {
+      Bucket: bucket_name || "",
+      Key: params.Key,
+    },
+    (err, data) => {
+      console.log(data);
+    }
+  );*/
+
+  let sa = await NFT.findOne({
+    contract: undefined,
+    tokenId: "STRAYCATS-b079a7-01",
+    chainId: "2",
+  });
+
+  console.log(sa);
 
   res.end();
 };
-//2--ORC-ef544d-0159-video
-//2--ORC-ef544d-0159-image
 
 const getSize = (url: string): Promise<number | undefined> =>
   new Promise(async (resolve, reject) => {
+    console.log("start stream");
     const responseStream = await axios
       .get(url, {
         responseType: "stream",
         timeout: 8000,
       })
       .catch((e: AxiosError) => {
+        console.log(e);
         if (e.code === "ECONNABORTED") {
           console.log("timeout");
           return reject(undefined);
@@ -848,17 +869,18 @@ const getSize = (url: string): Promise<number | undefined> =>
 
     let size = 0;
 
-    responseStream?.data
-      .on("data", (chunk: ArrayBuffer) => {
-        size += Buffer.byteLength(chunk);
-        if (size >= 5000000) {
-          responseStream.data.destroy();
-        }
-      })
-      .on("end", () =>
-        resolve(new BigNumber(size.toString()).shiftedBy(-6).toNumber())
-      )
-      .on("close", (err: any) =>
-        resolve(new BigNumber(size.toString()).shiftedBy(-6).toNumber())
-      );
+    responseStream?.data.on("data", (chunk: ArrayBuffer) => {
+      size += Buffer.byteLength(chunk);
+      if (size >= 5000000) {
+        responseStream.data?.destroy();
+      }
+    });
+    responseStream?.data.on("end", () => {
+      console.log("end");
+      resolve(new BigNumber(size.toString()).shiftedBy(-6).toNumber());
+    });
+    responseStream?.data.on("close", (err: any) => {
+      console.log("close");
+      resolve(new BigNumber(size.toString()).shiftedBy(-6).toNumber());
+    });
   });
