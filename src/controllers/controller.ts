@@ -852,7 +852,6 @@ const getSize = (url: string): Promise<number | undefined> =>
         timeout: 8000,
       })
       .catch((e: AxiosError) => {
-        console.log(e);
         if (e.code === "ECONNABORTED") {
           console.log("timeout");
           return reject(undefined);
