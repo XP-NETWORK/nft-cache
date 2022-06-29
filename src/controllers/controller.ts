@@ -825,9 +825,9 @@ export const testRoute = async (req: any, res: any) => {
     }
   });*/
 
-  /*const params = {
+  const params = {
     Bucket: bucket_name || "",
-    Key: "6-0xe12B16FFBf7D79eb72016102F3e3Ae6fe03fCA56-10",
+    Key: "23-0xD6939f722B977afd7DD934A31bc94d08d4ea4336-30463248987618308474467145162",
   };
 
   s3.deleteObject(
@@ -838,15 +838,7 @@ export const testRoute = async (req: any, res: any) => {
     (err, data) => {
       console.log(data);
     }
-  );*/
-
-  let sa = await NFT.findOne({
-    contract: undefined,
-    tokenId: "STRAYCATS-b079a7-01",
-    chainId: "2",
-  });
-
-  console.log(sa);
+  );
 
   res.end();
 };
