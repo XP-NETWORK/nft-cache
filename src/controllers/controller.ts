@@ -1,5 +1,5 @@
 import NFT, { INFT } from "../models/nft";
-import { s3 } from "../s3/s3Client";
+import { s3 } from "../services/s3Client";
 import { bucket_name, bot, chat_id } from "../helpers/consts";
 import {
   dataToNFTObj,
@@ -158,15 +158,15 @@ export const addNFT = async (req: any, res: any) => {
       };
     } else if (formattedVideoURI && !formattedImageURI) {
       imageNvideo =
-        //formattedVideoURI.item
-        {
-          item: formattedVideoURI.item,
-          //image: formattedImageURI.item,
-          //imageFormat: metaData.imageFormat
-          twoItems: 0,
-          //video: formattedVideoURI.item,
-          //video_format: metaData.animation_url_format
-        };
+      //formattedVideoURI.item
+      {
+        item: formattedVideoURI.item,
+        //image: formattedImageURI.item,
+        //imageFormat: metaData.imageFormat
+        twoItems: 0,
+        //video: formattedVideoURI.item,
+        //video_format: metaData.animation_url_format
+      };
     } else if (formattedImageURI && formattedVideoURI) {
       imageNvideo = {
         image: formattedImageURI.item,
@@ -213,7 +213,7 @@ export const addNFT = async (req: any, res: any) => {
             //console.log("still going in")
             try {
               NFT.addToCache(obj, 1);
-            } catch (e) {}
+            } catch (e) { }
 
             res.send(
               `without uploading ${params?.params?.Key || params?.Key} to AWS`
@@ -235,7 +235,7 @@ export const addNFT = async (req: any, res: any) => {
                 obj.metaData = newMetaData;
                 NFT.addToCache(obj, 1);
               })
-              .catch(() => {});
+              .catch(() => { });
           } catch (error) {
             console.log(error, "when image");
             return;
@@ -258,7 +258,7 @@ export const addNFT = async (req: any, res: any) => {
             obj.metaData = newMetaData;
             try {
               NFT.addToCache(obj, 1);
-            } catch (e) {}
+            } catch (e) { }
             res.send(
               `without uploading ${params?.params?.Key || params?.Key} to AWS`
             );
@@ -272,7 +272,7 @@ export const addNFT = async (req: any, res: any) => {
               obj.metaData = newMetaData;
               NFT.addToCache(obj, 1);
             })
-            .catch(() => {});
+            .catch(() => { });
           return;
         } catch (error) {
           console.log(error, "when video");
@@ -373,7 +373,7 @@ const getMB = async (uri: any) => {
         }
       );
     });
-  } catch (e) {}
+  } catch (e) { }
 };
 
 //a function to get the image's/video's uri
@@ -412,7 +412,7 @@ const uploadImage = async (params: any, metaData: any) => {
           }
         })
         .promise()
-        .catch(() => {});
+        .catch(() => { });
 
       let typeBody = params.Body ? params.Body : params.params.Body;
       try {
@@ -473,7 +473,7 @@ const uploadVideo = async (params: any, metaData: any, res: any) => {
       })
         .promise()
         .then((n) => n)
-        .catch(() => {});
+        .catch(() => { });
 
       //actually retreiving file data (image OR video)
       let typeBody = params.Body ? params.Body : params.params.Body;
@@ -572,7 +572,7 @@ const retrieveFileData = async (mediaURI: any) => {
         .get("")
         //let _data = await axios.get(mediaURI, { timeout: 60000, responseType: "arraybuffer" })
         .then((data) => (data.data ? data.data : undefined))
-        .catch(() => {});
+        .catch(() => { });
 
       if (_data) {
         resolve({
@@ -657,7 +657,7 @@ const fileUpload = async (uri: string, res: any) => {
           })
             .promise()
             .then((n) => n)
-            .catch(() => {});
+            .catch(() => { });
 
           /*s3.listObjects(searchParams, (err, data) => {
                         try {
@@ -875,3 +875,5 @@ const getSize = (url: string): Promise<number | undefined> =>
       resolve(new BigNumber(size.toString()).shiftedBy(-6).toNumber());
     });
   });
+
+
