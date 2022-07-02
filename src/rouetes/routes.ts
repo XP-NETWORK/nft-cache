@@ -5,13 +5,14 @@ import {
   getByURI,
   fileAdder,
   testRoute,
+  cacheNft
 } from "../controllers/controller";
 
 const router = express.Router();
 
 router.get("/uri", getByURI);
 router.get("/data", getByData);
-router.post("/add", addNFT);
+router.post("/add", cacheNft);
 router.post("/file", fileAdder);
 router.get("/test", testRoute);
 

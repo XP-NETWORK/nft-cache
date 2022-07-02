@@ -18,12 +18,13 @@ import {
 import request from "request";
 //import e from 'connect-timeout';
 import stream, { PassThrough, Readable } from "stream";
-import { Request } from "express";
+import { Request, Response } from "express";
 
 import BigNumber from "bignumber.js";
 
 import { S3 } from "aws-sdk";
 import { resolve } from "path/posix";
+import Uploader from '../services/uploader'
 
 const currentyFetching: string[] = [];
 
@@ -877,3 +878,22 @@ const getSize = (url: string): Promise<number | undefined> =>
   });
 
 
+const uploader = Uploader(s3, axios, bucket_name!)
+
+export const cacheNft = async (req: Request, res: Response) => {
+  const { key, url } = req.body
+
+  if (!key || !url) return res.end()
+  res.end()
+  try {
+
+    const cacheUrl = await uploader.upload(key as string, url as string);
+    uploader.release(key)
+    console.log(cacheUrl)
+  } catch (e: any) {
+    console.log(e.message, 'in controller')
+    uploader.release(key)
+  }
+
+
+}

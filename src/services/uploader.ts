@@ -3,8 +3,10 @@ import { Axios, AxiosError, AxiosResponse } from 'axios'
 import { bucket_name } from "../helpers/consts";
 import Retry from './retry'
 import { PassThrough } from "stream";
+import { resolve } from "path/posix";
 
-const limitMB = 5;
+
+const limit = 5000000; //300000;//5000000;
 const timeout = 10000;
 
 class Uploader {
@@ -21,20 +23,54 @@ class Uploader {
         this.s3 = s3
     }
 
-    public async upload(fileKey: string, fileUrl: string) {
-
+    public upload(fileKey: string, fileUrl: string) {
         let fileSize = 0;
 
-        const stream = await this.startStream(fileUrl) as AxiosResponse;
-        const { passThrough, uploading } = this.writeStream(fileKey, stream)
+
+        return new Promise(async (resolve, reject) => {
+            if (this.pool.includes(fileKey)) {
+                console.log('file already in pool')
+                return resolve('')
+            }
+
+            this.pool.push(fileKey);
+            setTimeout(() => this.release(fileKey), 12000);
+
+            console.log(`starting ${fileKey}`);
+            //start fetching file
+            const stream = await this.startStream(fileUrl).catch(e => reject(e)) as AxiosResponse;
+
+            if (stream) {
+                //start piping bytes in bucket
+                const { passThrough, uploading } = this.writeStream(fileKey, stream)
+                stream.data.pipe(passThrough)
+
+                //count  bytes and reject if exceede limit
+                stream.data.on('data', (chunk: ArrayBuffer) => {
+                    fileSize += Buffer.byteLength(chunk);
+                    if (fileSize >= limit) {
+                        stream.data?.destroy();
+                        reject('file size limit is exceeded')
+                    }
+                })
+
+                //wait for finish
+                const result = await uploading.catch(e => reject(e))
+                result && resolve(result.Location)
+            }
+
+        })
 
 
-        stream.data.pipe(passThrough);
 
-        const result = await uploading
+    }
 
-        return result.Location
+    public release(fileKey: string) {
+        const idx = this.pool.findIndex(key => key === fileKey);
 
+        if (idx > -1) {
+            this.pool.splice(idx, 1);
+        }
     }
 
     private async startStream(fileUrl: string) {
@@ -45,10 +81,9 @@ class Uploader {
             })
             .catch((e: AxiosError) => {
                 if (e.code === "ECONNABORTED") {
-                    console.log("timeout");
-
+                    throw new Error("file fetch timeout")
                 }
-                return '1'
+                throw e
             });
     }
 
