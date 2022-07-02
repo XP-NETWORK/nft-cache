@@ -23,11 +23,14 @@ class Uploader {
         this.s3 = s3
     }
 
-    public upload(fileKey: string, fileUrl: string) {
+    public upload(fileKey: string, fileUrl: string | undefined) {
+
         let fileSize = 0;
 
 
         return new Promise(async (resolve, reject) => {
+            if (!fileUrl) return resolve(undefined)
+
             if (this.pool.includes(fileKey)) {
                 console.log('file already in pool')
                 return resolve('')
@@ -80,6 +83,7 @@ class Uploader {
                 timeout
             })
             .catch((e: AxiosError) => {
+
                 if (e.code === "ECONNABORTED") {
                     throw new Error("file fetch timeout")
                 }

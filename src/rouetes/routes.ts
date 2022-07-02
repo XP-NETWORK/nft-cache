@@ -7,13 +7,15 @@ import {
   testRoute,
   cacheNft
 } from "../controllers/controller";
+import { validateAdd, prepareObject } from '../middleware'
+
 
 const router = express.Router();
 
 router.get("/uri", getByURI);
 router.get("/data", getByData);
-router.post("/add", cacheNft);
+router.post("/add", validateAdd, prepareObject, cacheNft);
 router.post("/file", fileAdder);
-router.get("/test", testRoute);
+router.post("/test", testRoute);
 
 export default router;

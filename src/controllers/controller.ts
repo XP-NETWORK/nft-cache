@@ -25,6 +25,7 @@ import BigNumber from "bignumber.js";
 import { S3 } from "aws-sdk";
 import { resolve } from "path/posix";
 import Uploader from '../services/uploader'
+import { parsedNft } from '../models/interfaces/nft'
 
 const currentyFetching: string[] = [];
 
@@ -379,7 +380,7 @@ const getMB = async (uri: any) => {
 
 //a function to get the image's/video's uri
 const getMyUri = (metaData: any) => {
-  if (metaData.animation_url && (metaData.image === "" || !metaData.image)) {
+  if (metaData.animation_url && (metaData === "" || !metaData.image)) {
     return metaData.animation_url;
   } else {
     return metaData.image;
@@ -801,7 +802,7 @@ const streamFileToS3 = async (url: string, Key: string) => {
     });
 };
 
-export const testRoute = async (req: any, res: any) => {
+export const testRoute = async (req: Request, res: any) => {
   /*const params = {
     Bucket: bucket_name || "",
     Prefix: "2-",
@@ -828,7 +829,7 @@ export const testRoute = async (req: any, res: any) => {
 
   const params = {
     Bucket: bucket_name || "",
-    Key: "23-0xD6939f722B977afd7DD934A31bc94d08d4ea4336-30463248987618308474467145162",
+    Key: req.body.key,
   };
 
   s3.deleteObject(
@@ -880,20 +881,35 @@ const getSize = (url: string): Promise<number | undefined> =>
 
 const uploader = Uploader(s3, axios, bucket_name!)
 
-export const cacheNft = async (req: Request, res: Response) => {
-  const { key, url } = req.body
+export const cacheNft = async (_: Request, res: Response) => {
 
-  if (!key || !url) return res.end()
-  res.end()
+  const nftObj: parsedNft = res.locals.nftObj
+  const fileKey: string = `${nftObj.chainId}-${nftObj.contract}-${nftObj.tokenId}`
+  console.log(nftObj)
+  console.log(fileKey);
+
+
   try {
-
-    const cacheUrl = await uploader.upload(key as string, url as string);
-    uploader.release(key)
-    console.log(cacheUrl)
+    res.end()
+    const imageUrl = await uploader.upload(fileKey, nftObj.metaData.image);
+    const animationUrl = await uploader.upload(`${fileKey}-video`, nftObj.metaData.animation_url);
+    await NFT.addToCache({
+      ...nftObj,
+      metaData: {
+        ...nftObj.metaData,
+        image: imageUrl,
+        ...(animationUrl ? { animation_url: animationUrl } : {}),
+      }
+    }, 1);
   } catch (e: any) {
-    console.log(e.message, 'in controller')
-    uploader.release(key)
+    console.log(e.message || e, 'in controller')
+    if (e === 'file size limit is exceeded') {
+      await NFT.addToCache(nftObj, 1)
+    }
+
+    //await NFT.addToCache(nftObj, 1)
+
   }
-
-
+  uploader.release(fileKey);
 }
+

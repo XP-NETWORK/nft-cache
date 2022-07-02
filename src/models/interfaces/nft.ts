@@ -1,5 +1,27 @@
 import { Document, Model, Schema } from "mongoose";
 
+
+export interface parsedNft {
+  chainId: string;
+  tokenId: string;
+  owner?: string;
+  uri: string;
+  contract?: string
+  contractType?: string
+  collectionIdent?: string
+  metaData: {
+    image: string;
+    imageFormat: string;
+    animation_url?: string;
+    animation_url_format?: string;
+    name?: string;
+    symbol?: string;
+    attributes?: any;
+    description?: string;
+    contractType?: string;
+  }
+}
+
 export interface INFT {
   chainId: { type: String };
   tokenId: { type: String };
