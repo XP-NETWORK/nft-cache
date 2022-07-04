@@ -803,19 +803,23 @@ const streamFileToS3 = async (url: string, Key: string) => {
 };
 
 export const testRoute = async (req: Request, res: any) => {
-  /*const params = {
+  const params = {
     Bucket: bucket_name || "",
-    Prefix: "2-",
+    Prefix: `${req.body.chain}-`,
   };
+
   s3.listObjects(params, (err, data) => {
-    var start = new Date();
-    start.setUTCHours(0, 0, 0, 0);
+    // var start = new Date();
+    // start.setUTCHours(0, 0, 0, 0);
     if (data && data.Contents?.length) {
       for (let i = 0; i < data.Contents?.length; i++) {
-        if (data.Contents[i].Key?.includes("ORC")) {
+        if (data.Contents[i].Key?.includes(req.body.collection)) {
+          console.log(data.Contents[i].Key);
+
           s3.deleteObject(
             {
               Bucket: bucket_name || "",
+              //@ts-ignore
               Key: data.Contents[i].Key!,
             },
             (err, data) => {
@@ -825,9 +829,22 @@ export const testRoute = async (req: Request, res: any) => {
         }
       }
     }
-  });*/
+  }); //"KINGSGUARD"
 
-  const params = {
+  const nfts = await NFT.find({
+    chainId: req.body.chain,
+  });
+
+  Promise.all(
+    nfts.map(async (nft) => {
+      if (nft.tokenId.toString().includes(req.body.collection)) {
+        console.log(nft);
+        return NFT.findByIdAndDelete(nft._id);
+      }
+    })
+  );
+
+  /*const params = {
     Bucket: bucket_name || "",
     Key: req.body.key,
   };
@@ -840,7 +857,7 @@ export const testRoute = async (req: Request, res: any) => {
     (err, data) => {
       console.log(data);
     }
-  );
+  );*/
 
   res.end();
 };
