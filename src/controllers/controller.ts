@@ -908,20 +908,26 @@ export const cacheNft = async (_: Request, res: Response) => {
       `${fileKey}-video`,
       nftObj.metaData.animation_url
     );
-    await NFT.addToCache(
-      {
-        ...nftObj,
-        metaData: {
-          ...nftObj.metaData,
-          image: imageUrl,
-          ...(animationUrl ? { animation_url: animationUrl } : {}),
+    imageUrl &&
+      (await NFT.addToCache(
+        {
+          ...nftObj,
+          metaData: {
+            ...nftObj.metaData,
+            image: imageUrl,
+            ...(animationUrl ? { animation_url: animationUrl } : {}),
+          },
         },
-      },
-      1
-    );
+        1
+      ));
     console.log(`finishing caching ${fileKey}`);
   } catch (e: any) {
-    console.log(e.message || e, "in controller");
+    console.log(
+      e.message || e,
+      `in controller ${nftObj.metaData.image}/${
+        nftObj.metaData.animation_url ? nftObj.metaData.animation_url : ""
+      }`
+    );
     if (e === "file size limit is exceeded") {
       await NFT.addToCache(nftObj, 1);
     }

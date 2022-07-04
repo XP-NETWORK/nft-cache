@@ -25,7 +25,7 @@ class Uploader {
     let fileSize = 0;
 
     return new Promise(async (resolve, reject) => {
-      if (!fileUrl) return resolve(undefined);
+      if (!fileUrl || /(^ipfs|^Q)/.test(fileUrl)) return resolve(undefined);
 
       if (this.pool.includes(fileKey)) {
         console.log("file already in pool");
