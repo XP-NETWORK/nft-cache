@@ -25,10 +25,7 @@ class Uploader {
     let fileSize = 0;
 
     return new Promise(async (resolve, reject) => {
-      if (
-        !fileUrl ||
-        /(^ipfs|^Q|^data\:application\/json\;base64)/.test(fileUrl)
-      )
+      if (!fileUrl || /(^ipfs|^Q|^data\:)/.test(fileUrl))
         return resolve(undefined);
 
       if (this.pool.includes(fileKey)) {
