@@ -24,8 +24,10 @@ import BigNumber from "bignumber.js";
 
 import { S3 } from "aws-sdk";
 import { resolve } from "path/posix";
-import Uploader from "../services/uploader";
+import { uploader } from "../services/uploader";
 import { parsedNft } from "../models/interfaces/nft";
+
+import { fromBuffer } from "file-type";
 
 const currentyFetching: string[] = [];
 
@@ -808,7 +810,21 @@ export const testRoute = async (req: Request, res: any) => {
     Prefix: `${req.body.chain}-`,
   };
 
-  s3.listObjects(params, (err, data) => {
+  const stream = await axios.get(
+    "https://ipfs.io/ipfs/QmZciQ2Bo5AgA7hYxt382LQ2GM1JEJ3K17uWnLpqRw6tsF/32.jpg",
+    {
+      responseType: "stream",
+    }
+  );
+
+  console.log(stream);
+
+  stream.data.on("data", async (chunk: ArrayBuffer) => {
+    console.log(await fromBuffer(chunk));
+    stream.data?.destroy();
+  });
+
+  /*s3.listObjects(params, (err, data) => {
     // var start = new Date();
     // start.setUTCHours(0, 0, 0, 0);
     if (data && data.Contents?.length) {
@@ -895,14 +911,15 @@ const getSize = (url: string): Promise<number | undefined> =>
     });
   });
 
-const uploader = Uploader(s3, axios, bucket_name!);
+//const uploader = Uploader(s3, axios, bucket_name!);
 
 export const cacheNft = async (_: Request, res: Response) => {
   const nftObj: parsedNft = res.locals.nftObj;
-  const fileKey: string = `${nftObj.chainId}-${nftObj.contract}-${nftObj.tokenId}`;
+  const fileKey: string = `${nftObj.chainId}-${nftObj.collectionIdent}-${nftObj.tokenId}`;
 
   try {
-    res.send(`caching nft ${fileKey}`);
+    res.json(nftObj);
+    await new Promise((resolve) => setTimeout(() => resolve(""), 5000));
     const imageUrl = await uploader.upload(fileKey, nftObj.metaData.image);
     const animationUrl = await uploader.upload(
       `${fileKey}-video`,

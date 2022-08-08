@@ -1,16 +1,21 @@
 import { S3 } from "aws-sdk";
-import { Axios, AxiosError, AxiosResponse } from "axios";
+import axios, { Axios, AxiosError, AxiosResponse } from "axios";
 import { bucket_name } from "../helpers/consts";
 import Retry from "./retry";
 import { PassThrough } from "stream";
 import { resolve } from "path/posix";
+
+import { s3 } from "../services/s3Client";
 
 const limit = 5000000; //300000;//5000000;
 const timeout = 20000;
 
 class Uploader {
   bucket: string;
-  public pool: string[] = [];
+  public pool: {
+    key: string;
+    data: any;
+  }[] = [];
   private retry: Retry = new Retry();
   private request: Axios;
   private s3: S3;
@@ -28,13 +33,14 @@ class Uploader {
       if (!fileUrl || /(^ipfs|^Q|^data\:)/.test(fileUrl))
         return resolve(undefined);
 
-      if (this.pool.includes(fileKey)) {
-        console.log("file already in pool");
-        return resolve("");
-      }
+      // if (this.pool.includes(fileKey)) {
+      // console.log("file already in pool");
+      //return resolve("");
+      // }
 
-      this.pool.push(fileKey);
-      setTimeout(() => this.release(fileKey), 22000);
+      //this.pool.push(fileKey);
+
+      //setTimeout(() => this.release(fileKey), 22000);
 
       console.log(`starting ${fileKey}`);
       //start fetching file
@@ -64,11 +70,14 @@ class Uploader {
   }
 
   public release(fileKey: string) {
-    const idx = this.pool.findIndex((key) => key === fileKey);
+    if (!this.pool.length) return;
+    const idx = this.pool.findIndex((item) => item.key === fileKey);
 
     if (idx > -1) {
       this.pool.splice(idx, 1);
     }
+
+    console.log(this.pool, "this.pool");
   }
 
   private async startStream(fileUrl: string) {
@@ -104,5 +113,8 @@ class Uploader {
   //private async wait
 }
 
-export default (s3: S3, request: Axios, bucket: string) =>
-  new Uploader(s3, request, bucket);
+export let uploader = new Uploader(s3, axios.create(), bucket_name!);
+export type { Uploader };
+
+/*export default (s3: S3, request: Axios, bucket: string) =>
+  new Uploader(s3, request, bucket);*/
