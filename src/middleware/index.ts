@@ -46,10 +46,11 @@ export const parseNft = async (
 
     const parsed = await nftGeneralParser(nft, account, whitelisted, "default");
 
-    uploader.pool[itemIdx] = {
-      key: uploader.pool[itemIdx].key,
-      data: parsed,
-    };
+    if (uploader.pool[itemIdx])
+      uploader.pool[itemIdx] = {
+        key: uploader.pool[itemIdx].key,
+        data: parsed,
+      };
 
     if (parsed?.metaData?.image || parsed?.metaData?.animation_url) {
       res.locals.parsed = parsed;
@@ -100,8 +101,6 @@ export const prepareObject = (
   const body: parsedNft = res.locals.parsed;
 
   const { metaData } = body;
-
-  console.log(metaData, "metaData");
 
   const nftObj = {
     ...body,

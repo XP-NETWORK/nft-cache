@@ -917,13 +917,20 @@ export const cacheNft = async (_: Request, res: Response) => {
   const nftObj: parsedNft = res.locals.nftObj;
   const fileKey: string = `${nftObj.chainId}-${nftObj.collectionIdent}-${nftObj.tokenId}`;
 
+  res.json(nftObj);
   try {
-    res.json(nftObj);
     await new Promise((resolve) => setTimeout(() => resolve(""), 5000));
-    const imageUrl = await uploader.upload(fileKey, nftObj.metaData.image);
+
+    const imageUrl = await uploader.upload(
+      fileKey,
+      nftObj.metaData.image,
+      nftObj.metaData.imageFormat
+    );
+
     const animationUrl = await uploader.upload(
       `${fileKey}-video`,
-      nftObj.metaData.animation_url
+      nftObj.metaData.animation_url,
+      nftObj.metaData.animation_url_format || ""
     );
     imageUrl &&
       (await NFT.addToCache(
@@ -937,7 +944,7 @@ export const cacheNft = async (_: Request, res: Response) => {
         },
         1
       ));
-    console.log(`finishing caching ${fileKey}`);
+    console.log(`finishing caching ${fileKey}:${imageUrl}`);
   } catch (e: any) {
     console.log(
       e.message || e,

@@ -6,6 +6,7 @@ import { PassThrough } from "stream";
 import { resolve } from "path/posix";
 
 import { s3 } from "../services/s3Client";
+import { stringMap } from "aws-sdk/clients/backup";
 
 const limit = 5000000; //300000;//5000000;
 const timeout = 20000;
@@ -26,7 +27,7 @@ class Uploader {
     this.s3 = s3;
   }
 
-  public upload(fileKey: string, fileUrl: string | undefined) {
+  public upload(fileKey: string, fileUrl: string | undefined, format: string) {
     let fileSize = 0;
 
     return new Promise(async (resolve, reject) => {
@@ -50,7 +51,11 @@ class Uploader {
 
       if (stream) {
         //start piping bytes in bucket
-        const { passThrough, uploading } = this.writeStream(fileKey, stream);
+        const { passThrough, uploading } = this.writeStream(
+          fileKey,
+          format,
+          stream
+        );
         stream.data.pipe(passThrough);
 
         //count  bytes and reject if exceede limit
@@ -76,8 +81,6 @@ class Uploader {
     if (idx > -1) {
       this.pool.splice(idx, 1);
     }
-
-    console.log(this.pool, "this.pool");
   }
 
   private async startStream(fileUrl: string) {
@@ -94,13 +97,13 @@ class Uploader {
       });
   }
 
-  private writeStream(fileKey: string, stream: AxiosResponse) {
+  private writeStream(fileKey: string, format: string, stream: AxiosResponse) {
     const passThrough = new PassThrough();
 
     const uploading = this.s3
       .upload({
         Bucket: this.bucket,
-        Key: fileKey,
+        Key: `${fileKey}.${format}`,
         ContentType: stream.headers["content-type"],
         ContentLength: Number(stream.headers["content-length"]),
         Body: passThrough,
