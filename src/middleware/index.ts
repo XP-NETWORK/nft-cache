@@ -44,7 +44,10 @@ export const parseNft = async (
 
     setTimeout(() => uploader.release(fileKey), 30000);
 
-    const parsed = await nftGeneralParser(nft, account, whitelisted, "default");
+    const parsed = await nftGeneralParser(nft, account, whitelisted).catch(e => {
+      console.log(e.code);
+      throw e
+    });
 
     if (uploader.pool[itemIdx])
       uploader.pool[itemIdx] = {
