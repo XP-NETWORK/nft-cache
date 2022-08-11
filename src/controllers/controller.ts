@@ -810,19 +810,24 @@ export const testRoute = async (req: Request, res: any) => {
     Prefix: `${req.body.chain}-`,
   };
 
-  const stream = await axios.get(
-    "https://ipfs.io/ipfs/QmZciQ2Bo5AgA7hYxt382LQ2GM1JEJ3K17uWnLpqRw6tsF/32.jpg",
-    {
-      responseType: "stream",
-    }
-  );
-
-  console.log(stream);
-
-  stream.data.on("data", async (chunk: ArrayBuffer) => {
-    console.log(await fromBuffer(chunk));
-    stream.data?.destroy();
+  const nfts = await NFT.find({
+    contract: "0x458d37551bd25C025648717E9Ee128b9DEd4dC59",
   });
+  console.log(nfts.length);
+
+  for (let i = 0; i < nfts.length; i++) {
+    const nft = nfts[i] as any;
+
+    // if (
+    //  nft.metaData.image //&&
+    // !nft.metaData.image.includes(
+    // "nft-cache-images.s3.eu-west-1.amazonaws.com"
+    //)
+    //) {
+    console.log("deleting ", nft.metaData?.image);
+    // await NFT.findByIdAndDelete(nft._id);
+    //}
+  }
 
   /*s3.listObjects(params, (err, data) => {
     // var start = new Date();
@@ -917,7 +922,8 @@ export const cacheNft = async (_: Request, res: Response) => {
   const nftObj: parsedNft = res.locals.nftObj;
   const fileKey: string = `${nftObj.chainId}-${nftObj.collectionIdent}-${nftObj.tokenId}`;
 
-  res.json(nftObj);
+  /*if (!nftObj.forceCache)*/ res.json(nftObj);
+
   try {
     await new Promise((resolve) => setTimeout(() => resolve(""), 5000));
 
@@ -932,18 +938,22 @@ export const cacheNft = async (_: Request, res: Response) => {
       nftObj.metaData.animation_url,
       nftObj.metaData.animation_url_format || ""
     );
-    imageUrl &&
-      (await NFT.addToCache(
-        {
-          ...nftObj,
-          metaData: {
-            ...nftObj.metaData,
-            image: imageUrl,
-            ...(animationUrl ? { animation_url: animationUrl } : {}),
-          },
-        },
-        1
-      ));
+
+    const newDoc = {
+      ...nftObj,
+      metaData: {
+        ...nftObj.metaData,
+        image: imageUrl,
+        ...(animationUrl ? { animation_url: animationUrl } : {}),
+      },
+    };
+
+    imageUrl && (await NFT.addToCache(newDoc, 1));
+
+    /*if (nftObj.forceCache) {
+      res.json(newDoc);
+    }*/
+
     console.log(`finishing caching ${fileKey}:${imageUrl}`);
   } catch (e: any) {
     console.log(
@@ -955,6 +965,16 @@ export const cacheNft = async (_: Request, res: Response) => {
     if (e === "file size limit is exceeded") {
       await NFT.addToCache(nftObj, 1);
     }
+
+    /*if (nftObj.forceCache) {
+      res.json({
+        ...nftObj,
+        metaData: {
+          ...nftObj.metaData,
+          image: "",
+        },
+      });
+    }*/
 
     //await NFT.addToCache(nftObj, 1)
   }

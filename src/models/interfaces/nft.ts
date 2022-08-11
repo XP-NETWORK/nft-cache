@@ -8,6 +8,7 @@ export interface parsedNft {
   contract?: string;
   contractType?: string;
   collectionIdent?: string;
+  forceCache?: boolean;
   metaData: {
     image: string;
     imageFormat: string;

@@ -28,8 +28,8 @@ export const parseNft = async (
           ? {
               ...response,
               uri:
-                response.metaData.animation_url && !response.metaData.image
-                  ? response.metaData.animation_url
+                response.metaData?.animation_url && !response.metaData.image
+                  ? response.metaData?.animation_url
                   : response.metaData.image,
             }
           : "That nft is already caching"
@@ -44,10 +44,12 @@ export const parseNft = async (
 
     setTimeout(() => uploader.release(fileKey), 30000);
 
-    const parsed = await nftGeneralParser(nft, account, whitelisted).catch(e => {
-      console.log(e.code);
-      throw e
-    });
+    const parsed = await nftGeneralParser(nft, account, whitelisted).catch(
+      (e) => {
+        console.log(e.code);
+        throw e;
+      }
+    );
 
     if (uploader.pool[itemIdx])
       uploader.pool[itemIdx] = {
@@ -108,8 +110,8 @@ export const prepareObject = (
   const nftObj = {
     ...body,
     uri:
-      metaData.animation_url && !metaData.image
-        ? metaData.animation_url
+      metaData?.animation_url && !metaData.image
+        ? metaData?.animation_url
         : metaData.image,
   };
 
