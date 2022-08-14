@@ -818,6 +818,16 @@ export const testRoute = async (req: Request, res: any) => {
   for (let i = 0; i < nfts.length; i++) {
     const nft = nfts[i] as any;
 
+    if (nft?.metaData?.collectionName === "Drifters") {
+      console.log("updating");
+      await NFT.findByIdAndUpdate(nft._id, {
+        metaData: {
+          ...nft.metaData,
+          collectionName: "Employees of the Metaverse",
+        },
+      });
+    }
+
     // if (
     //  nft.metaData.image //&&
     // !nft.metaData.image.includes(

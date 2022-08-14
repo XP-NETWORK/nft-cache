@@ -4,12 +4,28 @@ import { parsedNft } from "../models/interfaces/nft";
 import { nftGeneralParser } from "nft-parser/dist/src/index";
 import { uploader } from "../services/uploader";
 
+let decoder = new TextDecoder();
+
 export const parseNft = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   const { nft, account, whitelisted } = req.body;
+
+  if (/^custom_encoded64\:/.test(nft.uri)) {
+    const decoded = decoder.decode(
+      new Uint8Array(
+        nft.uri
+          .replace("custom_encoded64:", "")
+          .split(",")
+          .map((s: any) => Number(s))
+      )
+    );
+
+    nft.uri = decoded;
+    nft.native.uri = decoded;
+  }
 
   if (!nft?.native?.chainId || !nft?.collectionIdent || !nft?.native?.tokenId) {
     return res.send("key parameter missing");
