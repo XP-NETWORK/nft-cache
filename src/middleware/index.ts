@@ -13,7 +13,7 @@ export const parseNft = async (
 ) => {
   const { nft, account, whitelisted } = req.body;
 
-  if (/^custom_encoded64\:/.test(nft.uri)) {
+  /*if (/^custom_encoded64\:/.test(nft.uri)) {
     const decoded = decoder.decode(
       new Uint8Array(
         nft.uri
@@ -25,7 +25,7 @@ export const parseNft = async (
 
     nft.uri = decoded;
     nft.native.uri = decoded;
-  }
+  }*/
 
   if (!nft?.native?.chainId || !nft?.collectionIdent || !nft?.native?.tokenId) {
     return res.send("key parameter missing");

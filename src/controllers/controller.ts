@@ -8,13 +8,7 @@ import {
   dataToNFTObjFile,
 } from "../helpers/helpers";
 import axios, { AxiosError, AxiosResponse } from "axios";
-import fs from "fs";
-import {
-  sendInitMessage,
-  sendNewNFTCachedMessage,
-  sendNFTexistsMessage,
-  sendUploadedMessage,
-} from "../helpers/telegram";
+
 import request from "request";
 //import e from 'connect-timeout';
 import stream, { PassThrough, Readable } from "stream";
@@ -23,13 +17,9 @@ import { Request, Response } from "express";
 import BigNumber from "bignumber.js";
 
 import { S3 } from "aws-sdk";
-import { resolve } from "path/posix";
+
 import { uploader } from "../services/uploader";
 import { parsedNft } from "../models/interfaces/nft";
-
-import { fromBuffer } from "file-type";
-
-const currentyFetching: string[] = [];
 
 const myAxios = (baseurl: string) =>
   axios.create({
