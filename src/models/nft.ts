@@ -7,6 +7,8 @@ import {
   sendNFTexistsMessage,
 } from "../helpers/telegram";
 
+import { parsedNft } from "./interfaces/nft";
+
 export const docNFT = {
   chainId: { type: String },
   tokenId: { type: String },
@@ -42,6 +44,26 @@ schema.statics.getByData = async function (
     tokenId: tokenId,
   });
   //return await query.exec().then((r: INFTDocument) => r ? r : undefined)
+};
+
+/**
+ * 
+
+ */
+
+schema.statics.patchNft = function (
+  nft: parsedNft,
+  url: string,
+  animUrl?: string
+) {
+  return {
+    ...nft,
+    metaData: {
+      ...nft.metaData,
+      image: url,
+      ...(animUrl ? { animation_url: animUrl } : {}),
+    },
+  };
 };
 
 schema.statics.addToCache = async function (obj: any, mediasAdded: number) {

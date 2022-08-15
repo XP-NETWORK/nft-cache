@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+/*import { Request, Response, NextFunction } from "express";
 import { parsedNft } from "../models/interfaces/nft";
 
 import { nftGeneralParser } from "nft-parser/dist/src/index";
@@ -25,7 +25,7 @@ export const parseNft = async (
 
     nft.uri = decoded;
     nft.native.uri = decoded;
-  }*/
+  }
 
   if (!nft?.native?.chainId || !nft?.collectionIdent || !nft?.native?.tokenId) {
     return res.send("key parameter missing");
@@ -112,7 +112,7 @@ export const parseNft = async (
   }
 
   next();
-};*/
+}
 
 export const prepareObject = (
   req: Request,
@@ -135,3 +135,4 @@ export const prepareObject = (
 
   next();
 };
+*/

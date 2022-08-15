@@ -49,5 +49,6 @@ export interface INFTModel extends Model<INFTDocument> {
     tokenId: string
   ): Promise<INFTDocument>;
   addToCache(obj: any, mediasAdded: number): Promise<INFTDocument>;
+  patchNft(nft: parsedNft, url: string, animUrl?: string): parsedNft;
   addToCacheFile(obj: any, res: any): Promise<INFTDocument>;
 }
