@@ -118,6 +118,7 @@ export const testRoute = async (req: Request, res: any) => {
         const end = i * pack > nfts.length ? nfts.length : i * pack;
 
         const chunk = nfts.slice(start, end);
+
         await Promise.all(
           chunk.map(async (nft) => {
             try {
@@ -161,12 +162,13 @@ export const testRoute = async (req: Request, res: any) => {
                       NFT.patchNft(parsed, String(imageUrl), String(animUrl)),
                       1
                     );
+
                     cacheTokens.push(nft.tokenId);
                   }
                 }
               }
             } catch (e: any) {
-              console.log(e.code || e);
+              console.log(e.code || e, "upper");
             }
           })
         );

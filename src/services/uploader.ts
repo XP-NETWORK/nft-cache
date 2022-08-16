@@ -9,8 +9,8 @@ import { s3 } from "../services/s3Client";
 import { parsedNft } from "../models/interfaces/nft";
 
 const limit = 5000000; //300000;//5000000;
-const timeout = 20000;
-const connectionTiemout = 40000;
+const timeout = 30000;
+const connectionTiemout = 5000;
 
 class Uploader {
   bucket: string;
@@ -20,7 +20,9 @@ class Uploader {
 
   constructor(s3: S3, bucket: string) {
     this.bucket = bucket;
-    this.request = axios.create();
+    this.request = axios.create({
+      //timeout,
+    });
     this.s3 = s3;
   }
 
@@ -41,6 +43,7 @@ class Uploader {
           });
         })(),
         (async () => {
+          if (!nft.metaData.animation_url) return "";
           return await this.upload(
             `${key}-video`,
             nft.metaData.animation_url,
@@ -91,9 +94,9 @@ class Uploader {
         reject("file fetch timeout");
       }, connectionTiemout);
 
-      const stream = (await this.startStream(fileUrl).catch((e) =>
-        reject(e)
-      )) as AxiosResponse;
+      const stream = (await this.startStream(fileUrl).catch((e) => {
+        reject(e);
+      })) as AxiosResponse;
 
       if (stream) {
         //start piping bytes in bucket
@@ -102,22 +105,29 @@ class Uploader {
           format,
           stream
         );
+
+        passThrough.on("error", (err) => reject(undefined));
+        stream.data.on("error", (err1: any) => reject(err1.code));
         stream.data.pipe(passThrough);
 
-        //count  bytes and reject if exceede limit
         stream.data.on("data", (chunk: ArrayBuffer) => {
           tm && clearTimeout(tm);
 
           fileSize += Buffer.byteLength(chunk);
-          if (fileSize >= limit || rejected) {
+          if (rejected) {
+            stream.data?.destroy();
+            reject("");
+          }
+          if (fileSize >= limit) {
             stream.data?.destroy();
             reject("file size limit is exceeded");
           }
         });
 
         //wait for finish
-        const result = await uploading.catch((e) => reject(e));
 
+        const result = await uploading.catch((e: any) => reject(e));
+        //clearTimeout(lastChunk);
         result && resolve(result.Location);
       }
     });
@@ -127,7 +137,7 @@ class Uploader {
     return this.request
       .get(fileUrl, {
         responseType: "stream",
-        //timeout,
+        // timeout,
       })
       .catch((e: AxiosError) => {
         throw e;
