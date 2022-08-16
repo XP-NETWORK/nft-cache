@@ -10,7 +10,7 @@ import { parsedNft } from "../models/interfaces/nft";
 
 const limit = 5000000; //300000;//5000000;
 const timeout = 20000;
-const connectionTiemout = 2500;
+const connectionTiemout = 30000;
 
 class Uploader {
   bucket: string;
@@ -36,14 +36,18 @@ class Uploader {
             key,
             nft.metaData.image,
             nft.metaData.imageFormat
-          );
+          ).catch((e) => {
+            throw e;
+          });
         })(),
         (async () => {
           return await this.upload(
             `${key}-video`,
             nft.metaData.animation_url,
             nft.metaData.animation_url_format || ""
-          );
+          ).catch((e) => {
+            throw e;
+          });
         })(),
       ]);
 

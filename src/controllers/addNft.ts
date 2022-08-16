@@ -46,6 +46,8 @@ export const addNft = async (req: Request, res: Response) => {
     try {
       const [imageUrl, animUrl] = await uploader.uploadAll(key, parsed);
 
+      console.log(imageUrl, animUrl);
+
       (imageUrl || animUrl) &&
         (await NFT.addToCache(
           NFT.patchNft(parsed, String(imageUrl), String(animUrl)),
