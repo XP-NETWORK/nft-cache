@@ -10,7 +10,7 @@ import { parsedNft } from "../models/interfaces/nft";
 
 const limit = 5000000; //300000;//5000000;
 const timeout = 20000;
-const connectionTiemout = 30000;
+const connectionTiemout = 40000;
 
 class Uploader {
   bucket: string;
@@ -127,7 +127,7 @@ class Uploader {
     return this.request
       .get(fileUrl, {
         responseType: "stream",
-        timeout,
+        //timeout,
       })
       .catch((e: AxiosError) => {
         throw e;

@@ -108,7 +108,7 @@ export const testRoute = async (req: Request, res: any) => {
     }),
   ]);*/
 
-  const pack = 5;
+  const pack = 100;
   const x = Math.ceil(nfts.length / pack);
 
   const loop = async () => {
