@@ -108,7 +108,7 @@ export const testRoute = async (req: Request, res: any) => {
     }),
   ]);*/
 
-  const pack = 100;
+  const pack = 1000;
   const x = Math.ceil(nfts.length / pack);
 
   const loop = async () => {
@@ -177,7 +177,7 @@ export const testRoute = async (req: Request, res: any) => {
 
     console.log(nfts.length);
     console.log(cacheTokens.length, "cacheTokens");
-    await uploader.delay(5000);
+    await uploader.delay(10000);
     loop();
   };
 
