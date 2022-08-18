@@ -57,7 +57,7 @@ export const testRoute = async (req: Request, res: any) => {
     .map((nft) => nft.tokenId)
     .sort((a, b) => +b! - +a!) as unknown[];
 
-  const nfts: Idoc[] = [];
+  let nfts: Idoc[] = [];
   console.log(rawNfts.length, "rawNfts");
   rawNfts.forEach((nft) => {
     if (nfts.findIndex((n) => n.tokenId === nft.tokenId) === -1) {
@@ -65,7 +65,7 @@ export const testRoute = async (req: Request, res: any) => {
     }
   });
 
-  //nfts = nfts.slice(2, 3);
+  //nfts = nfts.slice(0, 1);
 
   /*const lacking: Idoc[] = [];
 
@@ -108,7 +108,7 @@ export const testRoute = async (req: Request, res: any) => {
     }),
   ]);*/
 
-  const pack = 1000;
+  const pack = 250;
   const x = Math.ceil(nfts.length / pack);
 
   const loop = async () => {
