@@ -67,23 +67,23 @@ export const testRoute = async (req: Request, res: any) => {
 
   //nfts = nfts.slice(0, 1);
 
-  /*const lacking: Idoc[] = [];
+  const lacking: Idoc[] = [];
 
-  [...Array(2001).keys()].slice(1).forEach((num) => {
+  [...Array(10000).keys()].slice(1).forEach((num) => {
     if (!cacheTokens.includes(String(num))) {
       //@ts-ignore
       const a = nfts.at(1)?._doc;
       lacking.push({
         ...a,
         tokenId: String(num),
-        uri: `ipfs://QmUQaEJxaDoCTfRDsPMcBvvmpza7G8zgkrzxbSwUFuA3qA/${String(
+        uri: `ipfs://QmRuhc7ouiD3FnXhxcnuxaZCzssr6nHBkU4Qfdrmw7tvaP/${String(
           num
         )}.json`,
       });
     }
   });
 
-  console.log(lacking.length);
+  nfts = lacking;
 
   /*const obj: any = {};
 
@@ -108,7 +108,7 @@ export const testRoute = async (req: Request, res: any) => {
     }),
   ]);*/
 
-  const pack = 250;
+  const pack = 500;
   const x = Math.ceil(nfts.length / pack);
 
   const loop = async () => {
