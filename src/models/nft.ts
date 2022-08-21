@@ -38,6 +38,14 @@ schema.statics.getByData = async function (
   chainId: string,
   tokenId: string
 ) {
+  if (chainId === "15") {
+    return await this.findOne({
+      collectionIdent: contract,
+      chainId: chainId,
+      tokenId: tokenId,
+    });
+  }
+
   return await this.findOne({
     contract: contract,
     chainId: chainId,
