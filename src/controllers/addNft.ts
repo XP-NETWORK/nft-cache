@@ -35,7 +35,9 @@ export const addNft = async (req: Request, res: Response) => {
   });
 
   try {
-    const parsed = await parser.parseNft(nft, account, whitelisted);
+    const parsed = nft.metaData
+      ? nft
+      : await parser.parseNft(nft, account, whitelisted);
 
     pool.updateItem(key, parsed);
 
@@ -46,15 +48,13 @@ export const addNft = async (req: Request, res: Response) => {
     try {
       const [imageUrl, animUrl] = await uploader.uploadAll(key, parsed);
 
-      console.log(imageUrl, animUrl);
-
       (imageUrl || animUrl) &&
         (await NFT.addToCache(
           NFT.patchNft(parsed, String(imageUrl), String(animUrl)),
           1
-        ));
+        ).catch((e) => console.log(e)));
 
-      console.log(`finishing caching ${key}`);
+      console.log(`finishing caching ${imageUrl}|${animUrl}`);
     } catch (e: any) {
       console.log(
         e.message || e,

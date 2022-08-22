@@ -60,12 +60,13 @@ schema.statics.getByData = async function (
  */
 
 schema.statics.patchNft = function (
-  nft: parsedNft,
+  nft: parsedNft & { native: any },
   url: string,
   animUrl?: string
 ) {
   return {
     ...nft,
+    ...(nft.native ? { ...nft.native } : {}),
     metaData: {
       ...nft.metaData,
       image: url,
