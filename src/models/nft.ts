@@ -59,23 +59,8 @@ schema.statics.getByData = async function (
 
  */
 
-schema.statics.patchNft = function (
-  nft: parsedNft & { native: any },
-  url: string,
-  animUrl?: string
-) {
-  return {
-    ...nft,
-    ...(nft.native ? { ...nft.native } : {}),
-    metaData: {
-      ...nft.metaData,
-      image: url,
-      ...(animUrl ? { animation_url: animUrl } : {}),
-    },
-  };
-};
-
 schema.statics.addToCache = async function (obj: any, mediasAdded: number) {
+  obj.contract = obj.contract || obj.collectionIdent;
   try {
     let NFT = await this.findOne({
       tokenId: obj.tokenId,

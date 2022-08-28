@@ -1,6 +1,5 @@
 import NFT, { INFT } from "../models/nft";
-//import e from 'connect-timeout';
-
+import { patchNft } from "../helpers/helpers";
 import { Request, Response } from "express";
 
 import Uploader from "../services/uploader";
@@ -48,11 +47,10 @@ export const addNft = async (req: Request, res: Response) => {
     try {
       const [imageUrl, animUrl] = await uploader.uploadAll(key, parsed);
 
+      const nft = patchNft(parsed, String(imageUrl), String(animUrl));
+
       (imageUrl || animUrl) &&
-        (await NFT.addToCache(
-          NFT.patchNft(parsed, String(imageUrl), String(animUrl)),
-          1
-        ).catch((e) => console.log(e)));
+        (await NFT.addToCache(nft, 1).catch((e) => console.log(e)));
 
       console.log(`finishing caching ${imageUrl}|${animUrl}`);
     } catch (e: any) {
@@ -61,6 +59,7 @@ export const addNft = async (req: Request, res: Response) => {
         `error in uploader ${parsed?.metaData?.image}`
       );
       if (e === "file size limit is exceeded") {
+        console.log("grio");
         await NFT.addToCache(parsed, 1);
       }
     }

@@ -9,6 +9,8 @@ import {
 } from "../helpers/helpers";
 import axios, { AxiosError, AxiosResponse } from "axios";
 
+import { patchNft } from "../helpers/helpers";
+
 import request from "request";
 //import e from 'connect-timeout';
 import stream, { PassThrough, Readable } from "stream";
@@ -159,7 +161,7 @@ export const testRoute = async (req: Request, res: any) => {
 
                   if (imageUrl || animUrl) {
                     await NFT.addToCache(
-                      NFT.patchNft(parsed, String(imageUrl), String(animUrl)),
+                      patchNft(parsed, String(imageUrl), String(animUrl)),
                       1
                     );
 
