@@ -71,16 +71,16 @@ export const testRoute = async (req: Request, res: any) => {
 
   const lacking: Idoc[] = [];
 
-  [...Array(10000).keys()].slice(1).forEach((num) => {
+  [...Array(2633).keys()].slice(1).forEach((num) => {
+    const id = String(num);
     if (!cacheTokens.includes(String(num))) {
       //@ts-ignore
       const a = nfts.at(1)?._doc;
       lacking.push({
         ...a,
-        tokenId: String(num),
-        uri: `ipfs://QmRuhc7ouiD3FnXhxcnuxaZCzssr6nHBkU4Qfdrmw7tvaP/${String(
-          num
-        )}.json`,
+        tokenId: id,
+        //contract: "0x36f8f51f65fe200311f709b797baf4e193dd0b0d",
+        uri: `https://www.treatdao.com/api/nft/${id}`,
       });
     }
   });
@@ -110,7 +110,7 @@ export const testRoute = async (req: Request, res: any) => {
     }),
   ]);*/
 
-  const pack = 500;
+  const pack = 200;
   const x = Math.ceil(nfts.length / pack);
 
   const loop = async () => {
@@ -130,7 +130,7 @@ export const testRoute = async (req: Request, res: any) => {
                 !cacheTokens.includes(nft?.tokenId)
               ) {
                 const key = `${chainId}-${contract}-${nft.tokenId}`;
-
+                console.log(key);
                 const parsed = pool.checkItem(key)
                   ? pool.get(pool.getItemIndex(key)).data
                   : await nftGeneralParser(
@@ -152,20 +152,28 @@ export const testRoute = async (req: Request, res: any) => {
                     });
                   }
 
-                  const [imageUrl, animUrl] = await uploader.uploadAll(
-                    key,
-                    parsed
-                  );
-
-                  console.log(imageUrl, ":FINISH");
-
-                  if (imageUrl || animUrl) {
-                    await NFT.addToCache(
-                      patchNft(parsed, String(imageUrl), String(animUrl)),
-                      1
+                  try {
+                    const [imageUrl, animUrl] = await uploader.uploadAll(
+                      key,
+                      parsed
                     );
 
-                    cacheTokens.push(nft.tokenId);
+                    console.log(imageUrl, ":FINISH");
+
+                    if (imageUrl || animUrl) {
+                      await NFT.addToCache(
+                        patchNft(parsed, String(imageUrl), String(animUrl)),
+                        1
+                      );
+
+                      cacheTokens.push(nft.tokenId);
+                    }
+                  } catch (e) {
+                    if (e === "file size limit is exceeded") {
+                      console.log("finished exceeded ", nft.tokenId);
+                      await NFT.addToCache(parsed, 1);
+                      cacheTokens.push(nft.tokenId);
+                    }
                   }
                 }
               }
