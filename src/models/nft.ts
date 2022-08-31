@@ -68,6 +68,7 @@ schema.statics.addToCache = async function (obj: any, mediasAdded: number) {
       ...(obj.contract && { contract: obj.contract }),
     });
     if (NFT !== null) {
+      //console.log(NFT);
       //sendNFTexistsMessage(NFT._id)
       //res.send(NFT.metaData)
       return;

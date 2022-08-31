@@ -1519,9 +1519,9 @@
     "@types/express" "*"
 
 "@types/node@*":
-  version "18.7.13"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.7.13.tgz#23e6c5168333480d454243378b69e861ab5c011a"
-  integrity sha512-46yIhxSe5xEaJZXWdIBP7GU4HDTG8/eo0qd9atdiL+lFpA03y8KS+lkTN834TWJj5767GbWv4n/P6efyTFt1Dw==
+  version "18.7.14"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.7.14.tgz#0fe081752a3333392d00586d815485a17c2cf3c9"
+  integrity sha512-6bbDaETVi8oyIARulOE9qF1/Qdi/23z6emrUh0fNJRUmjznqrixD4MpGDdgOFk5Xb0m2H6Xu42JGdvAxaJR/wA==
 
 "@types/node@^17.0.34":
   version "17.0.40"
@@ -3383,7 +3383,7 @@ negotiator@0.6.3:
 
 "nft-parser@git+https://github.com/xp-network/nft-parser#bleeding-edge":
   version "0.2.0"
-  resolved "git+https://github.com/xp-network/nft-parser#6d0a68675985a4fdd7b9cd558e8eb834fb2ba3f5"
+  resolved "git+https://github.com/xp-network/nft-parser#d3cb8af80708a1141ab5fa2d55a41be6a450d3ce"
   dependencies:
     "@taquito/taquito" "^13.0.0"
     "@types/node" "^17.0.35"

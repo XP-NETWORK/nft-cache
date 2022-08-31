@@ -51,7 +51,7 @@ export const testRoute = async (req: Request, res: any) => {
     }),
     NFT.find({
       chainId,
-      collectionIdent: contract,
+      contract: contract,
     }),
   ]);
 
@@ -59,6 +59,7 @@ export const testRoute = async (req: Request, res: any) => {
     .map((nft) => nft.tokenId)
     .sort((a, b) => +b! - +a!) as unknown[];
 
+  console.log(cacheTokens);
   let nfts: Idoc[] = [];
   console.log(rawNfts.length, "rawNfts");
   rawNfts.forEach((nft) => {
@@ -73,7 +74,7 @@ export const testRoute = async (req: Request, res: any) => {
 
   [...Array(2633).keys()].slice(1).forEach((num) => {
     const id = String(num);
-    if (!cacheTokens.includes(String(num))) {
+    if (!cacheTokens.includes(id)) {
       //@ts-ignore
       const a = nfts.at(1)?._doc;
       lacking.push({
@@ -173,7 +174,9 @@ export const testRoute = async (req: Request, res: any) => {
                       console.log("finished exceeded ", nft.tokenId);
                       await NFT.addToCache(parsed, 1);
                       cacheTokens.push(nft.tokenId);
+                      return;
                     }
+                    throw e;
                   }
                 }
               }

@@ -30,7 +30,7 @@ export const addNft = async (req: Request, res: Response) => {
   }
 
   pool.addItem({
-    key: `${nft.native.chainId}-${nft.collectionIdent}-${nft.native.tokenId}`,
+    key,
   });
 
   try {
