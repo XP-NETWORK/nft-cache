@@ -79,6 +79,7 @@ export function patchNft(
   return {
     ...nft,
     ...(nft.native ? { native: nft.native } : {}),
+    uri: nft.native.uri || nft.uri,
     metaData: {
       ...nft.metaData,
       image: url,
