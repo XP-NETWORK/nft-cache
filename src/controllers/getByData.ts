@@ -13,9 +13,9 @@ export const getByData = async (req: Request, res: Response) => {
     return;
   }
 
-  if (String(chainId) === "2") {
-    contract = "";
-  }
+  //if (String(chainId) === "2") {
+  //contract = "";
+  //}
 
   try {
     const result: INFT = await NFT.getByData(

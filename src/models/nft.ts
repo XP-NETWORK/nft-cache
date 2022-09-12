@@ -41,15 +41,23 @@ schema.statics.getByData = async function (
   if (chainId === "15") {
     return await this.findOne({
       collectionIdent: contract,
-      chainId: chainId,
-      tokenId: tokenId,
+      chainId,
+      tokenId,
+    });
+  }
+
+  if (chainId === "2") {
+    return await this.findOne({
+      contract: { $in: [contract, ""] },
+      chainId,
+      tokenId,
     });
   }
 
   return await this.findOne({
-    contract: contract,
-    chainId: chainId,
-    tokenId: tokenId,
+    contract,
+    chainId,
+    tokenId,
   });
   //return await query.exec().then((r: INFTDocument) => r ? r : undefined)
 };
