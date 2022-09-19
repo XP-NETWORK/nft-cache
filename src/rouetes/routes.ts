@@ -8,12 +8,14 @@ import { addNft } from "../controllers/addNft";
 
 import { testRoute } from "../controllers/addCollection";
 
+import { parseNft } from "../controllers/parseNft";
+
 const router = express.Router();
 
 router.get("/uri", getByURI);
 router.get("/data", getByData);
 router.post("/add", addNft);
-
+router.post("/parse", parseNft);
 router.post("/test", testRoute);
 
 export default router;
