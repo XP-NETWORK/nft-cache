@@ -9,7 +9,7 @@ import {
 } from "../helpers/helpers";
 import axios, { AxiosError, AxiosResponse } from "axios";
 
-import { patchNft } from "../helpers/helpers";
+import { patchNft, setupURI } from "../helpers/helpers";
 
 import request from "request";
 //import e from 'connect-timeout';
@@ -59,7 +59,6 @@ export const testRoute = async (req: Request, res: any) => {
     .map((nft) => nft.tokenId)
     .sort((a, b) => +b! - +a!) as unknown[];
 
-  console.log(cacheTokens);
   let nfts: Idoc[] = [];
   console.log(rawNfts.length, "rawNfts");
   rawNfts.forEach((nft) => {
@@ -68,9 +67,12 @@ export const testRoute = async (req: Request, res: any) => {
     }
   });
 
+  console.log(nfts.length);
+  console.log(cacheTokens.length);
+
   //nfts = nfts.slice(0, 1);
 
-  const lacking: Idoc[] = [];
+  /*const lacking: Idoc[] = [];
 
   [...Array(2633).keys()].slice(1).forEach((num) => {
     const id = String(num);
@@ -111,7 +113,7 @@ export const testRoute = async (req: Request, res: any) => {
     }),
   ]);*/
 
-  const pack = 200;
+  const pack = 500;
   const x = Math.ceil(nfts.length / pack);
 
   const loop = async () => {
@@ -154,10 +156,12 @@ export const testRoute = async (req: Request, res: any) => {
                   }
 
                   try {
-                    const [imageUrl, animUrl] = await uploader.uploadAll(
+                    const imageUrl = parsed?.metaData?.image;
+                    const animUrl = parsed?.metaData?.animation_url;
+                    /*const [imageUrl, animUrl] = await uploader.uploadAll(
                       key,
                       parsed
-                    );
+                    );*/
 
                     console.log(imageUrl, ":FINISH");
 
@@ -199,90 +203,206 @@ export const testRoute = async (req: Request, res: any) => {
   res.end();
 };
 
-/**
- * 
- * 
- *  const params = {
-    Bucket: bucket_name || "",
-    Prefix: `${req.body.chain}-`,
-  };
+export const uploadCollection = async (req: Request, res: any) => {
+  if (req.body.pass !== pass) return res.end("403");
 
-  const nfts = await NFT.find({
-    contract: "0x458d37551bd25C025648717E9Ee128b9DEd4dC59",
-  });
-  console.log(nfts.length);
+  const { contract, chainId } = req.body;
 
-  for (let i = 0; i < nfts.length; i++) {
-    const nft = nfts[i] as any;
+  let [ofOwner, nfts] = await Promise.all([
+    indexer.find({
+      chainId,
+      contract,
+      owner: "0xe4404312Df66A00f1Bee475455A46a558D97D2B2",
+    }),
+    NFT.find({
+      chainId,
+      contract: contract,
+    }),
+  ]);
 
-    if (nft?.metaData?.collectionName === "Drifters") {
-      console.log("updating");
-      await NFT.findByIdAndUpdate(nft._id, {
-        metaData: {
-          ...nft.metaData,
-          collectionName: "Employees of the Metaverse",
-        },
-      });
-    }
+  const tokensOfOwner = ofOwner.map((nft) => String(nft.tokenId));
 
-    // if (
-    //  nft.metaData.image //&&
-    // !nft.metaData.image.includes(
-    // "nft-cache-images.s3.eu-west-1.amazonaws.com"
-    //)
-    //) {
-    console.log("deleting ", nft.metaData?.image);
-    // await NFT.findByIdAndDelete(nft._id);
-    //}
-  }
+  console.log(tokensOfOwner.length, "");
 
-  /*s3.listObjects(params, (err, data) => {
-    // var start = new Date();
-    // start.setUTCHours(0, 0, 0, 0);
-    if (data && data.Contents?.length) {
-      for (let i = 0; i < data.Contents?.length; i++) {
-        if (data.Contents[i].Key?.includes(req.body.collection)) {
-          console.log(data.Contents[i].Key);
+  const cacheTokens: string[] = [];
 
-          s3.deleteObject(
-            {
-              Bucket: bucket_name || "",
+  const pack = 10000;
+  const x = Math.ceil(nfts.length / pack);
+
+  const loop = async () => {
+    for (let i = 1; i <= x; i++) {
+      if (true) {
+        const start = (i - 1) * pack;
+        const end = i * pack > nfts.length ? nfts.length : i * pack;
+
+        const chunk = nfts.slice(start, end);
+
+        await Promise.all(
+          chunk.map(async (nft) => {
+            if (
+              nft.uri &&
+              nft.tokenId &&
+              tokensOfOwner.includes(String(nft.tokenId)) &&
+              !cacheTokens.includes(String(nft.tokenId)) &&
               //@ts-ignore
-              Key: data.Contents[i].Key!,
-            },
-            (err, data) => {
-              console.log(`data: ${i} ` + data);
+              !/cache-images.s3.eu/.test(nft?.metaData?.image)
+            ) {
+              const parsed = {
+                ...nft.toObject(),
+              } as parsedNft;
+
+              const key = `${chainId}-${contract}-${nft.tokenId}`;
+
+              try {
+                uploader.setLimit(15000000);
+                const [imageUrl, animUrl] = await uploader.uploadAll(
+                  key,
+                  parsed
+                );
+
+                console.log(imageUrl, ":FINISH");
+
+                if (imageUrl || animUrl) {
+                  console.log("saving...");
+                  await NFT.updateOne(
+                    { _id: nft._id },
+                    {
+                      "metaData.image": imageUrl,
+                      "metaData.animation_url": "",
+                    }
+                  );
+
+                  cacheTokens.push(String(nft.tokenId));
+                }
+              } catch (e: any) {
+                console.log(e.code || e);
+                //throw e;
+              }
             }
-          );
-        }
+          })
+        );
       }
     }
-  }); //"KINGSGUARD"
 
-  const nfts = await NFT.find({
-    chainId: req.body.chain,
-  });
-
-  Promise.all(
-    nfts.map(async (nft) => {
-      if (nft.tokenId.toString().includes(req.body.collection)) {
-        console.log(nft);
-        return NFT.findByIdAndDelete(nft._id);
-      }
-    })
-  );
-
-  /*const params = {
-    Bucket: bucket_name || "",
-    Key: req.body.key,
+    console.log(nfts.length);
+    console.log(cacheTokens.length, "cacheTokens");
+    await uploader.delay(5000);
+    loop();
   };
 
-  s3.deleteObject(
-    {
-      Bucket: bucket_name || "",
-      Key: params.Key,
-    },
-    (err, data) => {
-      console.log(data);
+  loop();
+
+  res.end();
+};
+
+//https://api.tzkt.io/v1/tokens/balances?account=tz1WS92CzY5LdJGZU36sCZrDPtejZNMvHXfu&token.standard=fa2&limit=10000
+export const uploadTezos = async (req: Request, res: any) => {
+  if (req.body.pass !== pass) return res.end("403");
+
+  const { contract, chainId, owner } = req.body;
+
+  let [caches] = await Promise.all([
+    NFT.find({
+      chainId,
+      collectionIdent: contract,
+    }),
+  ]);
+
+  let nfts: any[] = await (
+    await axios(
+      `https://api.tzkt.io/v1/tokens/balances?account=${owner}&token.standard=fa2&limit=10000`
+    )
+  ).data;
+
+  nfts = nfts.filter((nft) => nft.token.contract.address === contract);
+
+  const cachedTokens: string[] = caches.map((c) => String(c.tokenId));
+
+  const pack = 20;
+  const x = Math.ceil(nfts.length / pack);
+
+  const loop = async () => {
+    for (let i = 1; i <= x; i++) {
+      if (true) {
+        const start = (i - 1) * pack;
+        const end = i * pack > nfts.length ? nfts.length : i * pack;
+
+        const chunk = nfts.slice(start, end);
+
+        await Promise.all(
+          chunk.map(async (nft) => {
+            nft = nft.token;
+            const tokenId = nft.tokenId;
+            try {
+              if (nft.metadata && !cachedTokens.includes(String(tokenId))) {
+                const key = `${chainId}-${contract}-${nft.tokenId}`;
+
+                const parsed = {
+                  chainId,
+                  tokenId,
+                  uri: setupURI(nft.metadata.displayUri),
+                  contract,
+                  collectionIdent: contract,
+                  metaData: {
+                    image: setupURI(nft.metadata.displayUri),
+                    imageFormat: "png",
+                    attributes: nft.metadata.attributes,
+                    description: nft.metadata.description,
+                    name: nft.metadata.name,
+                    symbol: nft.metadata.symbol,
+                  },
+                };
+
+                if (parsed.metaData) {
+                  if (!pool.checkItem(key)) {
+                    pool.addItem({
+                      key,
+                      data: parsed,
+                    });
+                  }
+
+                  try {
+                    const [imageUrl, animUrl] = await uploader.uploadAll(
+                      key,
+                      parsed
+                    );
+
+                    console.log(imageUrl, ":FINISH");
+
+                    if (imageUrl || animUrl) {
+                      await NFT.addToCache(
+                        patchNft(parsed, String(imageUrl), String(animUrl)),
+                        1
+                      );
+
+                      cachedTokens.push(tokenId);
+                    }
+                  } catch (e) {
+                    if (e === "file size limit is exceeded") {
+                      console.log("finished exceeded ", tokenId);
+                      await NFT.addToCache(parsed, 1);
+                      cachedTokens.push(tokenId);
+                      return;
+                    }
+                    throw e;
+                  }
+                }
+              }
+            } catch (e: any) {
+              console.log(e.code || e, "upper");
+            }
+          })
+        );
+      }
     }
-  );*/
+
+    console.log(nfts.length);
+    console.log(cachedTokens.length, "cacheTokens");
+    await uploader.delay(10000);
+    loop();
+  };
+
+  loop();
+
+  res.end();
+};

@@ -72,14 +72,14 @@ export const dataToNFTObjFile = (uri: any, metaData: any) => {
 };
 
 export function patchNft(
-  nft: parsedNft & { native: any },
+  nft: parsedNft & { native?: any },
   url: string,
   animUrl?: string
 ) {
   return {
     ...nft,
     ...(nft.native ? { native: nft.native } : {}),
-    uri: nft.native.uri || nft.uri,
+    uri: nft.native?.uri || nft.uri,
     metaData: {
       ...nft.metaData,
       image: url,
@@ -103,4 +103,31 @@ export const paramsForFile = (uri: string) => {
   };
 
   return params;
+};
+
+export const setupURI = (uri: string): string => {
+  if (uri) {
+    if (uri.includes("https://ipfs.io")) {
+      return uri;
+    } else if (/^ipfs:\/\//.test(uri)) {
+      return "https://ipfs.io/ipfs/" + uri.split("://")[1];
+    } else if (/^https\:\/\/ipfs.io/.test(uri)) {
+      return uri;
+    } else if (
+      uri.includes("data:image/") ||
+      uri.includes("data:application/")
+    ) {
+      return uri;
+    } else if (uri[0] === "Q") {
+      return `https://ipfs.io/ipfs/${uri}`;
+    } else if (uri.includes("http://")) {
+      return uri.replace("http://", "https://");
+    } else if (/^https\:\/\//.test(uri)) {
+      return uri;
+    } else {
+      throw new Error("unknown uri format");
+    }
+  } else {
+    return uri;
+  }
 };

@@ -10,13 +10,14 @@ import { parsedNft } from "../models/interfaces/nft";
 
 const limit = 5000000; //300000;//5000000;
 const timeout = 30000;
-const connectionTiemout = 5000;
+const connectionTiemout = 10000;
 
 class Uploader {
   bucket: string;
   private retry: Retry = new Retry();
   private request: Axios;
   private s3: S3;
+  private sizeLimit = limit;
 
   constructor(s3: S3, bucket: string) {
     this.bucket = bucket;
@@ -24,6 +25,10 @@ class Uploader {
       //timeout,
     });
     this.s3 = s3;
+  }
+
+  public setLimit(size: number) {
+    this.sizeLimit = size;
   }
 
   async delay(time: number) {
@@ -74,7 +79,12 @@ class Uploader {
     let fileSize = 0;
 
     return new Promise(async (resolve, reject) => {
-      if (!fileUrl || /(^ipfs|^Q|^data\:)/.test(fileUrl)) return resolve("");
+      if (
+        !fileUrl ||
+        fileUrl === "undefined" ||
+        /(^ipfs|^Q|^data\:)/.test(fileUrl)
+      )
+        return resolve("");
 
       // if (this.pool.includes(fileKey)) {
       // console.log("file already in pool");
@@ -85,7 +95,7 @@ class Uploader {
 
       //setTimeout(() => this.release(fileKey), 22000);
 
-      console.log(`starting ${fileKey}`);
+      console.log(`starting ${fileKey}, ${fileUrl}`);
       //start fetching file
 
       let rejected = false;
@@ -119,7 +129,7 @@ class Uploader {
             stream.data?.destroy();
             reject("");
           }
-          if (fileSize >= limit) {
+          if (fileSize >= this.sizeLimit) {
             stream.data?.destroy();
             reject("file size limit is exceeded");
           }
