@@ -3393,7 +3393,7 @@ negotiator@0.6.3:
 
 "nft-parser@git+https://github.com/xp-network/nft-parser#bleeding-edge":
   version "0.2.0"
-  resolved "git+https://github.com/xp-network/nft-parser#7e14b8796f7e9265d7f6f5537f80374c7d25e82f"
+  resolved "git+https://github.com/xp-network/nft-parser#90d322c70f4f52cf6bdff1f7cce9346e10631f22"
   dependencies:
     "@taquito/taquito" "^13.0.0"
     "@types/node" "^17.0.35"
