@@ -37,6 +37,7 @@ export const addNft = async (req: Request, res: Response) => {
     const parsed = nft.metaData
       ? nft
       : await parser.parseNft(nft, account, whitelisted);
+    console.log({ parsed });
 
     pool.updateItem(key, parsed);
 
