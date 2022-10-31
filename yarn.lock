@@ -3789,7 +3789,7 @@ negotiator@0.6.3:
 
 "nft-parser@git+https://github.com/xp-network/nft-parser#bleeding-edge":
   version "0.2.0"
-  resolved "git+https://github.com/xp-network/nft-parser#5b214f05b0fbd8f996b6c70eedc20396927c2e07"
+  resolved "git+https://github.com/xp-network/nft-parser#df135275dedc22c6c7b5d9653ce34cdc507211a3"
   dependencies:
     "@moralisweb3/evm-utils" "^2.7.0"
     "@taquito/taquito" "^13.0.0"
