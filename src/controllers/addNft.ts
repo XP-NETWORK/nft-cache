@@ -37,7 +37,6 @@ export const addNft = async (req: Request, res: Response) => {
     const parsed = nft.metaData
       ? nft
       : await parser.parseNft(nft, account, whitelisted);
-    console.log({ parsed });
 
     pool.updateItem(key, parsed);
 
@@ -60,7 +59,6 @@ export const addNft = async (req: Request, res: Response) => {
         `error in uploader ${parsed?.metaData?.image}`
       );
       if (e === "file size limit is exceeded") {
-        console.log("grio");
         await NFT.addToCache(parsed, 1);
       }
     }
