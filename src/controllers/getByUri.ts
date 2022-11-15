@@ -20,12 +20,13 @@ export const getByURI = async (req: Request, res: Response) => {
     return;
   }
   try {
+    console.log(uri, "uri");
     const result: any = await NFT.getByURI(uri);
     if (result) {
       res.status(200).send(result.metaData);
       return;
     } else {
-      res.status(200).send("no such NFT found");
+      res.status(200).send("no NFT with that data was found");
       return;
     }
   } catch (error) {
