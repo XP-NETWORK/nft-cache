@@ -12,12 +12,14 @@ const uploader = Uploader();
 
 export const addNft = async (req: Request, res: Response) => {
   const { nft, account, whitelisted } = req.body;
+  const { collectionIdent } = nft
+  const { chainId, tokenId, uri } = nft?.native
 
-  if (!nft?.native?.chainId || !nft?.collectionIdent || !nft?.native?.tokenId) {
+  if (!chainId || !collectionIdent || (chainId !== "27" && !tokenId) || (chainId === "27" && !uri)) {
     return res.send("key parameter missing");
   }
 
-  const key = `${nft.native.chainId}-${nft.collectionIdent}-${nft.native.tokenId}`;
+  const key = `${chainId}-${collectionIdent}-${chainId !== "27" ? tokenId : uri}`;
 
   if (pool.checkItem(key)) {
     console.log("already in pool");
