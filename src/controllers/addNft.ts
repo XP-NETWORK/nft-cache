@@ -15,11 +15,11 @@ export const addNft = async (req: Request, res: Response) => {
   const { collectionIdent, uri } = nft
   const { chainId, tokenId } = nft?.native
 
-  if (!chainId || !collectionIdent || (chainId !== "27" && !tokenId) || (chainId === "27" && !uri)) {
+  if (!chainId || !collectionIdent || !tokenId) {
     return res.send("key parameter missing");
   }
 
-  const key = `${chainId}-${collectionIdent}-${chainId !== "27" ? tokenId : uri}`;
+  const key = `${chainId}-${collectionIdent}-${tokenId}`;
 
   if (pool.checkItem(key)) {
     console.log("already in pool");
