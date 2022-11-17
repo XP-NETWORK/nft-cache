@@ -12,8 +12,8 @@ const uploader = Uploader();
 
 export const addNft = async (req: Request, res: Response) => {
   const { nft, account, whitelisted } = req.body;
-  const { collectionIdent, uri } = nft
-  const { chainId, tokenId } = nft?.native
+  const { collectionIdent } = nft;
+  const { chainId, tokenId } = nft?.native;
 
   if (!chainId || !collectionIdent || !tokenId) {
     return res.send("key parameter missing");
