@@ -6,6 +6,8 @@ import { getByURI } from "../controllers/getByUri";
 
 import { addNft } from "../controllers/addNft";
 
+import { deleneNFt } from "../controllers/deleteNfts";
+
 import {
   testRoute,
   uploadCollection,
@@ -20,6 +22,7 @@ router.get("/uri", getByURI);
 router.get("/data", getByData);
 router.post("/add", addNft);
 router.post("/parse", parseNft);
+//router.post("/remove", deleneNFt);
 //router.post("/test", testRoute);
 //router.post("/test1", uploadCollection);
 //router.post("/test2", uploadTezos);

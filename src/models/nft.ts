@@ -54,6 +54,13 @@ schema.statics.getByData = async function (
     });
   }
 
+  if (chainId === "27" && (contract === tokenId || contract === "SingleNFt")) {
+    return await this.findOne({
+      chainId,
+      tokenId,
+    });
+  }
+
   return await this.findOne({
     contract,
     chainId,
