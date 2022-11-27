@@ -34,6 +34,7 @@ import Indexer, { Idoc } from "../services/indexUpdater";
 import Pool from "../services/pool";
 
 import { nftGeneralParser } from "nft-parser/dist/src";
+import { String } from "aws-sdk/clients/cloudtrail";
 
 const indexer = Indexer();
 const uploader = Uploader();
@@ -208,25 +209,46 @@ export const uploadCollection = async (req: Request, res: any) => {
 
   const { contract, chainId } = req.body;
 
-  let [ofOwner, nfts] = await Promise.all([
+  let [ofOwner, cached] = await Promise.all([
     indexer.find({
       chainId,
       contract,
-      owner: "0xe4404312Df66A00f1Bee475455A46a558D97D2B2",
+      owner: "0x147a5ACe0cA84940c0A335DF2405471Fd98C49B9",
     }),
     NFT.find({
       chainId,
       contract: contract,
+      owner: "0x147a5ACe0cA84940c0A335DF2405471Fd98C49B9",
     }),
   ]);
 
   const tokensOfOwner = ofOwner.map((nft) => String(nft.tokenId));
+  console.log(cached.length);
+  const cacheTokens = cached.map((nft) => String(nft.tokenId)) as string[];
 
-  console.log(tokensOfOwner.length, "");
+  const lacking: Idoc[] = [];
 
-  const cacheTokens: string[] = [];
+  ofOwner.forEach((nft) => {
+    const id = String(nft.tokenId);
+    if (!cacheTokens.includes(id)) {
+      //@ts-ignore
+      const a = ofOwner.at(1)?._doc;
+      lacking.push({
+        ...a,
+        tokenId: id,
+        //contract: "0x36f8f51f65fe200311f709b797baf4e193dd0b0d",
+        uri: nft.uri,
+      });
+    }
+  });
 
-  const pack = 10000;
+  //cached.map((nft) => nft.remove());
+
+  //return res.end();
+
+  const nfts = lacking;
+
+  const pack = 50;
   const x = Math.ceil(nfts.length / pack);
 
   const loop = async () => {
@@ -242,16 +264,25 @@ export const uploadCollection = async (req: Request, res: any) => {
             if (
               nft.uri &&
               nft.tokenId &&
-              tokensOfOwner.includes(String(nft.tokenId)) &&
-              !cacheTokens.includes(String(nft.tokenId)) &&
+              //tokensOfOwner.includes(String(nft.tokenId)) &&
+              !cacheTokens.includes(String(nft.tokenId))
               //@ts-ignore
-              !/cache-images.s3.eu/.test(nft?.metaData?.image)
+              //!/cache-images.s3.eu/.test(nft?.metaData?.image)
             ) {
-              const parsed = {
-                ...nft.toObject(),
-              } as parsedNft;
-
               const key = `${chainId}-${contract}-${nft.tokenId}`;
+
+              const parsed = pool.checkItem(key)
+                ? pool.get(pool.getItemIndex(key)).data
+                : await nftGeneralParser(
+                    {
+                      //@ts-ignore
+                      native: nft,
+                      uri: nft.uri,
+                      collectionIdent: contract,
+                    },
+                    nft.owner,
+                    true
+                  );
 
               try {
                 uploader.setLimit(15000000);
@@ -264,15 +295,12 @@ export const uploadCollection = async (req: Request, res: any) => {
 
                 if (imageUrl || animUrl) {
                   console.log("saving...");
-                  await NFT.updateOne(
-                    { _id: nft._id },
-                    {
-                      "metaData.image": imageUrl,
-                      "metaData.animation_url": "",
-                    }
+                  await NFT.addToCache(
+                    patchNft(parsed, String(imageUrl), String(animUrl)),
+                    1
                   );
 
-                  cacheTokens.push(String(nft.tokenId));
+                  cacheTokens.push(nft.tokenId);
                 }
               } catch (e: any) {
                 console.log(e.code || e);
