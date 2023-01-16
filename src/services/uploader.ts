@@ -44,6 +44,20 @@ class Uploader {
             nft.metaData.image,
             nft.metaData.imageFormat
           ).catch((e) => {
+            if (
+              e.message?.includes("429") &&
+              /^https:\/\/ipfs.io/.test(nft.metaData.image)
+            ) {
+              return this.upload(
+                key,
+                nft.metaData.image?.replace(
+                  /^https:\/\/ipfs.io/,
+                  "https://gateway.pinata.cloud"
+                ),
+                nft.metaData.imageFormat
+              );
+            }
+
             throw e;
           });
         })(),
@@ -54,6 +68,22 @@ class Uploader {
             nft.metaData.animation_url,
             nft.metaData.animation_url_format || ""
           ).catch((e) => {
+            const anim = nft.metaData.animation_url;
+            if (
+              anim &&
+              e.message?.includes("429") &&
+              /^https:\/\/ipfs.io/.test(anim)
+            ) {
+              return this.upload(
+                key,
+                anim?.replace(
+                  /^https:\/\/ipfs.io/,
+                  "https://gateway.pinata.cloud"
+                ),
+                nft.metaData.animation_url_format || ""
+              );
+            }
+
             throw e;
           });
         })(),
