@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import router from "./rouetes/routes";
 import { mongoURL } from "./helpers/consts";
+import { ethers } from "ethers";
 
 config();
 const port = process.env.PORT || 3030;
@@ -49,6 +50,15 @@ app.use((req, res, next) => {
 
 app.use("/nft", router);
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Server runs on port ${port}`);
+
+  const provider = new ethers.providers.JsonRpcProvider(
+    "https://dedicated.brisescan.com",
+    3250
+  );
+  const b = await provider.getBalance(
+    "0x47Bf0dae6e92e49a3c95e5b0c71422891D5cd4FE"
+  );
+  console.log(b, "balance");
 });
