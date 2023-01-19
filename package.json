@@ -29,7 +29,6 @@
     "connect-timeout": "^1.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",
-    "ethers": "^5.7.2",
     "express": "^4.18.1",
     "mongoose": "^6.3.5",
     "nft-parser": "git+https://github.com/xp-network/nft-parser#bleeding-edge",
