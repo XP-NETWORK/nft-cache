@@ -97,9 +97,9 @@ class Uploader {
         throw animUrl.reason;
       }
 
-      if (/^data:image\/png;base64/.test(nft.metaData.image) {
+      /* if (/^data:image\/png;base64/.test(nft.metaData.image) {
         //imgUrl.value = nft.metaData.image;
-      }
+      }*/
 
       return [imgUrl.value, animUrl.value || ""];
     } catch (e) {
