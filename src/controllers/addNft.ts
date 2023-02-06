@@ -51,7 +51,9 @@ export const addNft = async (req: Request, res: Response) => {
 
       const nft = patchNft(parsed, String(imageUrl), String(animUrl));
 
-      (imageUrl || animUrl) &&
+      (imageUrl ||
+        animUrl ||
+        nft.metaData.image.includes("data:image/png;base64")) &&
         (await NFT.addToCache(nft, 1).catch((e) => console.log(e)));
 
       console.log(`finishing caching ${imageUrl}|${animUrl}`);
@@ -65,6 +67,7 @@ export const addNft = async (req: Request, res: Response) => {
       }
     }
   } catch (e: any) {
+    console.log(e, "e");
     console.log(e.code, "error in parser");
   }
 

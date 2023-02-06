@@ -1,3 +1,4 @@
+//@ts-nocheck
 import mongoose, { ObjectId } from "mongoose";
 
 import { indexer_db } from "../helpers/consts";
