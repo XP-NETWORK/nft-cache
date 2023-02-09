@@ -37,6 +37,10 @@ class Uploader {
 
   public async uploadAll(key: string, nft: parsedNft) {
     try {
+      if (/^data:image\/svg\+xml;utf8/.test(nft.metaData.image)) {
+        return [nft.metaData.image, ""];
+      }
+
       const [imgUrl, animUrl] = await Promise.allSettled([
         (async () => {
           return await this.upload(
@@ -96,10 +100,6 @@ class Uploader {
       if (animUrl.status === "rejected") {
         throw animUrl.reason;
       }
-
-      /* if (/^data:image\/png;base64/.test(nft.metaData.image) {
-        //imgUrl.value = nft.metaData.image;
-      }*/
 
       return [imgUrl.value, animUrl.value || ""];
     } catch (e) {
