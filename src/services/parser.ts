@@ -1,7 +1,18 @@
-import { nftGeneralParser } from "nft-parser/dist/src/index";
+import { nftGeneralParser, injectMoralis } from "nft-parser/dist/src/index";
 import { parsedNft } from "../models/interfaces/nft";
+import Moralis from "moralis";
+import { config } from "dotenv";
+
+config();
 
 class Parser {
+  constructor() {
+    Moralis.start({
+      apiKey: process.env.MORALIS_KEY!,
+    });
+    injectMoralis(Moralis);
+  }
+
   prepareNft(nft: parsedNft) {
     const { metaData } = nft;
 
