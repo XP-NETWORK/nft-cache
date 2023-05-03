@@ -7,10 +7,14 @@ config();
 
 class Parser {
     constructor() {
-        Moralis.start({
-            apiKey: process.env.MORALIS_KEY!,
-        });
-        injectMoralis(Moralis);
+        try {
+            Moralis.start({
+                apiKey: process.env.MORALIS_KEY!,
+            });
+            injectMoralis(Moralis);
+        } catch (e) {
+            console.log(e, "e");
+        }
     }
 
     prepareNft(nft: parsedNft) {
