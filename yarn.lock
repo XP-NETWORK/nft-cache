@@ -1448,14 +1448,24 @@
     "@moralisweb3/common-sol-utils" "^2.19.0"
     "@moralisweb3/streams-typings" "^1.0.6"
 
-"@moralisweb3/common-core@^2.19.0":
-  version "2.19.0"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/common-core/-/common-core-2.19.0.tgz#8af70f83683dffae3c07f9e2a798ade1d0551a7b"
-  integrity sha512-jdl3K81WRoxvemnkgFu9PQjh0r37ZQFh4PpF4xw6t2Eafkr3fHJ9T4gDk67srVdgHQr7a7ny/5ow1PjcfgsX9w==
+"@moralisweb3/common-core@^2.19.0", "@moralisweb3/common-core@^2.22.2":
+  version "2.22.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/common-core/-/common-core-2.22.2.tgz#55197ef9adb538d2811dc19b9c063a75d940ec4d"
+  integrity sha512-k6KD3RwjcJfWv7Go5i06hzDUR5QB/9uY73t4ys9B2B7vp8puO3hy1GDcbf/GxZ4gJyFbyyffCGish140vnVyzg==
   dependencies:
     axios "^1.2.1"
 
-"@moralisweb3/common-evm-utils@^2.17.0", "@moralisweb3/common-evm-utils@^2.19.0":
+"@moralisweb3/common-evm-utils@^2.17.0":
+  version "2.22.2"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/common-evm-utils/-/common-evm-utils-2.22.2.tgz#502d881db32ce785b1a0e0f760a608feda01eaaf"
+  integrity sha512-P9EjsAHLUYoheeFNnivxrAa5cXzT8q+iHZEINCW8QUgTkLrDDeOqIgc+9Hb1JcHSFHUrqzEX6S7FKHJThQ2xFQ==
+  dependencies:
+    "@ethersproject/address" "^5.7.0"
+    "@ethersproject/bytes" "^5.7.0"
+    "@ethersproject/transactions" "^5.7.0"
+    "@moralisweb3/common-core" "^2.22.2"
+
+"@moralisweb3/common-evm-utils@^2.19.0":
   version "2.19.0"
   resolved "https://registry.yarnpkg.com/@moralisweb3/common-evm-utils/-/common-evm-utils-2.19.0.tgz#c15047350231c52283c4a0f6336e1b3b0fb4cede"
   integrity sha512-NK7tC07njUcbyTJcKl4BB4qJYxl6ih41pLI+MmiqyxlqbFQy8hLW67/2w1TifMgvCPzNygg/1k1jEfUiEH6r5g==
@@ -1790,9 +1800,9 @@
     "@types/express" "*"
 
 "@types/node@*":
-  version "18.16.3"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.16.3.tgz#6bda7819aae6ea0b386ebc5b24bdf602f1b42b01"
-  integrity sha512-OPs5WnnT1xkCBiuQrZA4+YAV4HEJejmHneyraIaxsbev5yCEr6KMwINNFP9wQeFIw8FWcoTqF3vQsa5CDaI+8Q==
+  version "20.3.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.3.1.tgz#e8a83f1aa8b649377bb1fb5d7bac5cb90e784dfe"
+  integrity sha512-EhcH/wvidPy1WeML3TtYFGR83UzjxeWRen9V402T8aUGYsCHOmfoisV3ZSg03gAFIbLq8TnWOJ0f4cALtnSEUg==
 
 "@types/node@^17.0.34", "@types/node@^17.0.35":
   version "17.0.45"
@@ -3602,7 +3612,7 @@ negotiator@0.6.3:
 
 "nft-parser@git+https://github.com/xp-network/nft-parser#bleeding-edge":
   version "0.2.0"
-  resolved "git+https://github.com/xp-network/nft-parser#f936d9bc54afebc2b8102001bac7b0f2f20e9ca6"
+  resolved "git+https://github.com/xp-network/nft-parser#ba56c09b7cd54d808006d49fd01f49d06e3d2909"
   dependencies:
     "@ethersproject/providers" "^5.7.2"
     "@moralisweb3/common-evm-utils" "^2.17.0"
@@ -4551,7 +4561,7 @@ xmlbuilder@~9.0.1:
 
 "xpnet-web3-contracts@git+https://github.com/XP-NETWORK/XP.network-HECO-Migration.git#dist-erc1155":
   version "0.1.0"
-  resolved "git+https://github.com/XP-NETWORK/XP.network-HECO-Migration.git#aa9473ea3b0f748bba54f5755abcfd17e3548237"
+  resolved "git+https://github.com/XP-NETWORK/XP.network-HECO-Migration.git#d3588c8b64ddfec499ae1bbcf1399e0efe6d78e3"
   dependencies:
     ethers "^5.5.4"
 

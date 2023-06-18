@@ -1,49 +1,38 @@
 import { parsedNft } from "../models/interfaces/nft";
 
 interface Item {
-  key: string;
-  data?: any;
+    key: string;
+    data?: any;
 }
 
 class Pool {
-  pool: Item[] = [];
+    pool: Map<string, any> = new Map();
 
-  get(idx: number) {
-    return this.pool[idx];
-  }
-
-  getItemIndex(key: string) {
-    return this.pool.findIndex((item) => item.key === key);
-  }
-
-  checkItem(key: string) {
-    return this.getItemIndex(key) > -1;
-  }
-
-  addItem(item: Item) {
-    this.pool.push(item);
-    setTimeout(() => this.releaseItem(item.key), 30000);
-  }
-
-  updateItem(key: string, data: parsedNft) {
-    const idx = this.getItemIndex(key);
-
-    if (idx > -1) {
-      this.pool[idx] = {
-        ...this.pool[idx],
-        data,
-      };
+    get(key: string) {
+        return this.pool.get(key);
     }
-  }
 
-  releaseItem(key: string) {
-    if (this.pool.length < 1) return;
-    const idx = this.getItemIndex(key);
+    /* getItemIndex(key: string) {
+        return this.pool.get(key);
+    }*/
 
-    if (idx > -1) {
-      this.pool.splice(idx, 1);
+    checkItem(key: string) {
+        return this.pool.has(key);
     }
-  }
+
+    addItem(item: Item) {
+        this.pool.set(item.key, item.data);
+        setTimeout(() => this.releaseItem(item.key), 30000);
+    }
+
+    updateItem(key: string, data: parsedNft) {
+        this.pool.set(key, data);
+    }
+
+    releaseItem(key: string) {
+        if (this.pool.size < 1) return;
+        this.pool.delete(key);
+    }
 }
 
 export default () => new Pool();
