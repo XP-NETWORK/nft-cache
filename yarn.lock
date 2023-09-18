@@ -1455,22 +1455,22 @@
   dependencies:
     axios "^1.2.1"
 
-"@moralisweb3/common-core@^2.22.4":
-  version "2.22.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/common-core/-/common-core-2.22.4.tgz#2ce2d0910ace1643de1e13a902670152065ba300"
-  integrity sha512-E/gsjutGYHs28tTJPDppO2Zw5WKWdQiBHVjYtT8RfV+p7TD5rxmaK1kAdvj1cP2JZAbhW8K41OGBm+ekyzR/2w==
+"@moralisweb3/common-core@^2.23.1":
+  version "2.23.1"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/common-core/-/common-core-2.23.1.tgz#14810d127ed8a41f4fe3558db97d42b1d27641bc"
+  integrity sha512-lU917PxTU37YBrNfzJ2IXCTz2sL8NsE6bXF1ucxdl2yDi1YaS+9tPE9vXnxuVOmNQKfcxb09PyNsv0tt/sUhxA==
   dependencies:
     axios "^1.2.1"
 
 "@moralisweb3/common-evm-utils@^2.17.0":
-  version "2.22.4"
-  resolved "https://registry.yarnpkg.com/@moralisweb3/common-evm-utils/-/common-evm-utils-2.22.4.tgz#655f574b074c41b9e826b70f48e73e82d5dfc3a9"
-  integrity sha512-hghNO3xksq6TmDgbwoURTzir7h/Ipg/8DlZa/6kb5/fDvGR9kyY+HbKcQyVNGc9PoykQO1BSEv1LLq47BD8w1w==
+  version "2.23.1"
+  resolved "https://registry.yarnpkg.com/@moralisweb3/common-evm-utils/-/common-evm-utils-2.23.1.tgz#f1317c8a513a24ab2b18d1c7f3fc00cdeed1838d"
+  integrity sha512-otjWXVgqbKPz9aXENF94wT177zBv46W+W6FsQhNRKIP96Da44Cfh7/ZiufdPrfCP0OCDxDKw++oKch//EDruXg==
   dependencies:
     "@ethersproject/address" "^5.7.0"
     "@ethersproject/bytes" "^5.7.0"
     "@ethersproject/transactions" "^5.7.0"
-    "@moralisweb3/common-core" "^2.22.4"
+    "@moralisweb3/common-core" "^2.23.1"
 
 "@moralisweb3/common-evm-utils@^2.19.0":
   version "2.19.0"
@@ -1807,9 +1807,9 @@
     "@types/express" "*"
 
 "@types/node@*", "@types/node@^20.4.2":
-  version "20.4.8"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.4.8.tgz#b5dda19adaa473a9bf0ab5cbd8f30ec7d43f5c85"
-  integrity sha512-0mHckf6D2DiIAzh8fM8f3HQCvMKDpK94YQ0DSVkfWTG9BZleYIWudw9cJxX8oCk9bM+vAkDyujDV6dmKHbvQpg==
+  version "20.6.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.6.2.tgz#a065925409f59657022e9063275cd0b9bd7e1b12"
+  integrity sha512-Y+/1vGBHV/cYk6OI1Na/LHzwnlNCAfU3ZNGrc1LdRe/LAIbdDPTTv/HU3M7yXN448aTVDq3eKRm2cg7iKLb8gw==
 
 "@types/node@^17.0.34":
   version "17.0.45"
@@ -2056,9 +2056,9 @@ axios@^0.27.2:
     form-data "^4.0.0"
 
 axios@^1.2.1:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-1.4.0.tgz#38a7bf1224cd308de271146038b551d725f0be1f"
-  integrity sha512-S4XCWMEmzvo64T9GfvQDOXgYRDJ/wsSZc7Jvdgx5u1sd0JwsuPLqb3SYmusag+edF6ziyMensPVqLTSc1PiSEA==
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.5.0.tgz#f02e4af823e2e46a9768cfc74691fdd0517ea267"
+  integrity sha512-D4DdjDo5CY50Qms0qGQTTw6Q44jl7zRwY7bthds06pUGfChBCTcQs+N743eFWGEd6pRTMd6A+I87aWyFV5wiZQ==
   dependencies:
     follow-redirects "^1.15.0"
     form-data "^4.0.0"
@@ -3619,7 +3619,7 @@ negotiator@0.6.3:
 
 "nft-parser@git+https://github.com/xp-network/nft-parser#bleeding-edge":
   version "0.2.0"
-  resolved "git+https://github.com/xp-network/nft-parser#c747fa7c9fee8eb009f557f83139d4968d4e001d"
+  resolved "git+https://github.com/xp-network/nft-parser#9e6784c5935ba97ade7431c4b3830a04fd03d496"
   dependencies:
     "@ethersproject/providers" "^5.7.2"
     "@moralisweb3/common-evm-utils" "^2.17.0"
@@ -4391,9 +4391,9 @@ typescript@^4.6.4:
   integrity sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==
 
 typescript@^5.1.6:
-  version "5.1.6"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.1.6.tgz#02f8ac202b6dad2c0dd5e0913745b47a37998274"
-  integrity sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==
+  version "5.2.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.2.2.tgz#5ebb5e5a5b75f085f22bc3f8460fba308310fa78"
+  integrity sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==
 
 undefsafe@^2.0.5:
   version "2.0.5"
