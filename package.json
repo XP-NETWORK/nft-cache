@@ -23,7 +23,7 @@
         "@types/multer-s3": "^2.7.12",
         "@types/node": "^17.0.34",
         "@types/request": "^2.48.8",
-        "aws-sdk": "^2.1141.0",
+        "aws-sdk": "^2.1467.0",
         "axios": "^0.27.2",
         "bignumber.js": "^9.0.2",
         "connect-timeout": "^1.9.0",
