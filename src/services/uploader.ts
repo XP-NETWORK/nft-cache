@@ -50,7 +50,7 @@ class Uploader {
                         nft.metaData.imageFormat
                     ).catch((e) => {
                         if (
-                            new RegExp(this.retryCodes).test(e.message) &&
+                            // new RegExp(this.retryCodes).test(e.message) &&
                             /^https:\/\/ipfs.io/.test(nft.metaData.image)
                         ) {
                             return this.upload(
